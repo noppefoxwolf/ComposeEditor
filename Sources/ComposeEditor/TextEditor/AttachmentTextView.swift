@@ -122,5 +122,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
         leftInset += leadingAttachmentsView.bounds.width
         leftInset += leadingAttachmentInset.right
         textContainerInset.left = leftInset
+        
+        textContainerInset.right = 0
     }
 }
