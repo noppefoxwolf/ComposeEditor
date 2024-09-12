@@ -3,7 +3,8 @@ import UIKit
 
 open class AttachmentTextView: NativePlaceholderTextView {
     public let leadingAttachmentsView = UIStackView()
-    final class LeadingAttachmentConstraints: Sendable {
+    
+    final class LeadingAttachmentConstraints {
         var leading: NSLayoutConstraint? = nil
         var top: NSLayoutConstraint? = nil
     }
@@ -11,7 +12,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
     
     
     public let bottomAttachmentsView = UIStackView()
-    final class BottomAttachmentConstraints: Sendable {
+    final class BottomAttachmentConstraints {
         var leading: NSLayoutConstraint? = nil
         var trailing: NSLayoutConstraint? = nil
         var bottom: NSLayoutConstraint? = nil
