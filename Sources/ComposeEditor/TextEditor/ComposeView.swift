@@ -1,5 +1,4 @@
 import Combine
 import UIKit
 
-public final class ComposeTextView: InputAccessoryHostingTextView {
-}
+public final class ComposeTextView: PasteboardActionTextView {}
