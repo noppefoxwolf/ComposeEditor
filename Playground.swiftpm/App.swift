@@ -1,5 +1,6 @@
 import SwiftUI
 import ComposeEditor
+import os
 
 @main
 struct App: SwiftUI.App {
@@ -12,7 +13,7 @@ struct App: SwiftUI.App {
 
 struct ContentView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> some UIViewController {
-        ViewController()
+        UINavigationController(rootViewController: ViewController())
     }
     
     func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
@@ -20,27 +21,96 @@ struct ContentView: UIViewControllerRepresentable {
     }
 }
 
-final class ViewController: UIViewController {
-    let composeTextView = ComposeTextView()
+final class ViewController: UIViewController, UITextViewDelegate {
+    let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier! + ".logger",
+        category: #file
+    )
+    let textView = ComposeTextView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        composeTextView.placeholder = "Hello, World"
-        view.addSubview(composeTextView)
-        composeTextView.translatesAutoresizingMaskIntoConstraints = false
+        textView.delegate = self
+        textView.placeholder = "Hello, World"
+        view.addSubview(textView)
+        textView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            composeTextView.topAnchor.constraint(equalTo: view.topAnchor),
-            view.bottomAnchor.constraint(equalTo: composeTextView.bottomAnchor),
-            composeTextView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            view.trailingAnchor.constraint(equalTo: composeTextView.trailingAnchor),
+            textView.topAnchor.constraint(equalTo: view.topAnchor),
+            view.bottomAnchor.constraint(equalTo: textView.bottomAnchor),
+            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: textView.trailingAnchor),
         ])
         
         let attachmentView = _UIHostingView(rootView: Color.green.frame(height: 44))
-        composeTextView.bottomAttachmentsView.addArrangedSubview(attachmentView)
+        textView.bottomAttachmentsView.addArrangedSubview(attachmentView)
         
         let attachmentView2 = _UIHostingView(rootView: Color.red.frame(width: 64, height: 34))
-        composeTextView.leadingAttachmentsView.addArrangedSubview(attachmentView2)
+        textView.leadingAttachmentsView.addArrangedSubview(attachmentView2)
+        
+        navigationController?.setToolbarHidden(false, animated: false)
+        
+        setToolbarItems([
+            UIBarButtonItem(
+                image: UIImage(systemName: "text.insert"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.virtualKeyboard.insertText("insert", addingWhitespaceIfNeeded: true)
+                }
+            ),
+            UIBarButtonItem(
+                image: UIImage(systemName: "text.append"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.virtualKeyboard.appendText("append", addingWhitespaceIfNeeded: true)
+                }
+            ),
+            UIBarButtonItem(
+                image: UIImage(systemName: "text.append"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.virtualKeyboard.appendText("#hashtag", addingWhitespaceIfNeeded: true)
+                }
+            ),
+            UIBarButtonItem(
+                image: UIImage(systemName: "text.append"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.virtualKeyboard.appendText("https://example.com", addingWhitespaceIfNeeded: true)
+                }
+            ),
+            UIBarButtonItem(
+                image: UIImage(systemName: "arrow.forward.to.line"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.virtualKeyboard.selectEndOfContent()
+                }
+            ),
+            UIBarButtonItem(
+                image: UIImage(systemName: "arrow.uturn.backward.circle"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.undoManager?.undo()
+                }
+            ),
+            UIBarButtonItem(
+                image: UIImage(systemName: "arrow.uturn.forward.circle"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.undoManager?.redo()
+                }
+            ),
+        ], animated: false)
+    }
+    
+    func textView(
+        _ textView: UITextView,
+        shouldChangeTextIn range: NSRange,
+        replacementText text: String
+    ) -> Bool {
+        logger.debug("\(#function) \(range) \(text)")
+        return true
+    }
+    
+    func textViewDidChange(_ textView: UITextView) {
+        logger.debug("\(#function)")
+    }
+    
+    func textViewDidEndEditing(_ textView: UITextView) {
+        logger.debug("\(#function)")
     }
 }
 
