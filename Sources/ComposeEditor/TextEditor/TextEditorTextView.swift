@@ -1,5 +1,6 @@
 import UIKit
 import RegexBuilder
+import Foundation
 
 open class TextEditorTextView: PasteboardActionTextView {
     public lazy var virtualKeyboard: VirtualKeyboard = {
@@ -54,6 +55,13 @@ public final class VirtualKeyboard {
     public func replaceText(_ text: String) {
         guard let textView else { return }
         replaceText(textView.documentRange, withText: text)
+    }
+    
+    public func replaceText(_ range: Range<String.Index>, withText text: String) {
+        guard let textView else { return }
+        let textRange = textView.textRange(of: range, in: textView.text)
+        guard let textRange else { return }
+        replaceText(textRange, withText: text)
     }
     
     public func replaceText(_ textRange: UITextRange, withText text: String) {
