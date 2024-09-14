@@ -53,24 +53,21 @@ public final class VirtualKeyboard {
     
     public func replaceText(_ text: String) {
         guard let textView else { return }
-        let documentRange = textView.textRange(
-            from: textView.beginningOfDocument,
-            to: textView.endOfDocument
-        )
-        let location = 0
-        let length = text.count
-        let range = NSRange(location: location, length: length)
+        replaceText(textView.documentRange, withText: text)
+    }
+    
+    public func replaceText(_ textRange: UITextRange, withText text: String) {
+        guard let textView else { return }
+        let startOffset = textView.offset(from: textRange.start, to: textRange.start)
+        let endOffset = textView.offset(from: textRange.end, to: textRange.end)
+        let range = NSRange(location: startOffset, length: endOffset - startOffset)
         let shouldChange = textView.delegate?.textView?(
             textView,
             shouldChangeTextIn: range,
             replacementText: text
         )
         if shouldChange ?? true {
-            if let documentRange {
-                textView.replace(documentRange, withText: text)
-            } else {
-                textView.text = text
-            }
+            textView.replace(textRange, withText: text)
             textView.delegate?.textViewDidChange?(textView)
         }
     }

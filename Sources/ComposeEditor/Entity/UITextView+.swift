@@ -17,6 +17,10 @@ extension UITextView {
         guard let selectedLineTextRangeStart, let selectedLineTextRangeEnd else { return nil }
         return textRange(from: selectedLineTextRangeStart, to: selectedLineTextRangeEnd)
     }
+    
+    var documentRange: UITextRange {
+        textRange(from: beginningOfDocument, to: endOfDocument)!
+    }
 }
 
 extension UITextView {

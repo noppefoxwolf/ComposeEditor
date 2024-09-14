@@ -78,7 +78,7 @@ final class ViewController: UIViewController, UITextViewDelegate {
             UIBarButtonItem(
                 image: UIImage(systemName: "doc.on.clipboard.fill"),
                 primaryAction: UIAction { [unowned self] _ in
-                    textView.virtualKeyboard.pasteText("Paste")
+                    textView.virtualKeyboard.replaceText("Paste")
                 }
             ),
             UIBarButtonItem(
