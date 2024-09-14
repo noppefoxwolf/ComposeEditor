@@ -51,6 +51,30 @@ public final class VirtualKeyboard {
         textView.selectedTextRange = beforeSelectedRange
     }
     
+    public func replaceText(_ text: String) {
+        guard let textView else { return }
+        let documentRange = textView.textRange(
+            from: textView.beginningOfDocument,
+            to: textView.endOfDocument
+        )
+        let location = 0
+        let length = text.count
+        let range = NSRange(location: location, length: length)
+        let shouldChange = textView.delegate?.textView?(
+            textView,
+            shouldChangeTextIn: range,
+            replacementText: text
+        )
+        if shouldChange ?? true {
+            if let documentRange {
+                textView.replace(documentRange, withText: text)
+            } else {
+                textView.text = text
+            }
+            textView.delegate?.textViewDidChange?(textView)
+        }
+    }
+    
     public func deleteBackward() {
         guard let textView else { return }
         textView.deleteBackward()

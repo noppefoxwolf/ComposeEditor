@@ -76,6 +76,12 @@ final class ViewController: UIViewController, UITextViewDelegate {
                 }
             ),
             UIBarButtonItem(
+                image: UIImage(systemName: "doc.on.clipboard.fill"),
+                primaryAction: UIAction { [unowned self] _ in
+                    textView.virtualKeyboard.pasteText("Paste")
+                }
+            ),
+            UIBarButtonItem(
                 image: UIImage(systemName: "arrow.forward.to.line"),
                 primaryAction: UIAction { [unowned self] _ in
                     textView.virtualKeyboard.selectEndOfContent()
