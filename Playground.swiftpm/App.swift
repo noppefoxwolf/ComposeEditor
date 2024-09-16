@@ -107,7 +107,7 @@ final class ViewController: UIViewController, UITextViewDelegate {
         shouldChangeTextIn range: NSRange,
         replacementText text: String
     ) -> Bool {
-        logger.debug("\(#function) \(range) \(text)")
+        logger.debug("\(#function) \(textView.text) \(range) \(text)")
         return true
     }
     

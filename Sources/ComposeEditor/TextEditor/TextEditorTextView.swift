@@ -52,19 +52,19 @@ public final class VirtualKeyboard {
         textView.selectedTextRange = beforeSelectedRange
     }
     
-    public func replaceText(_ text: String) {
+    public func replaceText(_ text: String, addingWhitespaceIfNeeded: Bool = false) {
         guard let textView else { return }
-        replaceText(textView.documentRange, withText: text)
+        replaceText(textView.documentRange, withText: text, addingWhitespaceIfNeeded: addingWhitespaceIfNeeded)
     }
     
-    public func replaceText(_ range: Range<String.Index>, withText text: String) {
+    public func replaceText(_ range: Range<String.Index>, withText text: String, addingWhitespaceIfNeeded: Bool = false) {
         guard let textView else { return }
         let textRange = textView.textRange(of: range, in: textView.text)
         guard let textRange else { return }
-        replaceText(textRange, withText: text)
+        replaceText(textRange, withText: text, addingWhitespaceIfNeeded: addingWhitespaceIfNeeded)
     }
     
-    public func replaceText(_ textRange: UITextRange, withText text: String) {
+    public func replaceText(_ textRange: UITextRange, withText text: String, addingWhitespaceIfNeeded: Bool = false) {
         guard let textView else { return }
         let startOffset = textView.offset(from: textRange.start, to: textRange.start)
         let endOffset = textView.offset(from: textRange.end, to: textRange.end)
@@ -75,6 +75,15 @@ public final class VirtualKeyboard {
             replacementText: text
         )
         if shouldChange ?? true {
+            var text = text
+            if addingWhitespaceIfNeeded {
+                if !textView.hasLeftPadding(at: textRange.start) && !text.hasPrefix(whiteSpace) {
+                    text.insert(contentsOf: whiteSpace, at: text.startIndex)
+                }
+                if !textView.hasRightPadding(at: textRange.end) && !text.hasSuffix(whiteSpace) {
+                    text.append(contentsOf: whiteSpace)
+                }
+            }
             textView.replace(textRange, withText: text)
             textView.delegate?.textViewDidChange?(textView)
         }
