@@ -66,7 +66,7 @@ final class ViewController: UIViewController, UITextViewDelegate {
             UIBarButtonItem(
                 image: UIImage(systemName: "text.append"),
                 primaryAction: UIAction { [unowned self] _ in
-                    textView.virtualKeyboard.appendText("#hashtag", addingWhitespaceIfNeeded: true)
+                    textView.virtualKeyboard.appendText("@noppe #hashtag", addingWhitespaceIfNeeded: true)
                 }
             ),
             UIBarButtonItem(
