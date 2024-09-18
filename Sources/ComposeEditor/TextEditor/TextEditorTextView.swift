@@ -103,7 +103,6 @@ public final class VirtualKeyboard {
                 }
                 ChoiceOf {
                     Regex.hashtag
-                    Regex.mention
                     One(.url())
                 }
             }
