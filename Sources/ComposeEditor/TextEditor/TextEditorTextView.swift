@@ -37,7 +37,6 @@ public final class VirtualKeyboard {
                 }
             }
             textView.insertText(text)
-            textView.delegate?.textViewDidChange?(textView)
         }
     }
     
@@ -85,7 +84,6 @@ public final class VirtualKeyboard {
                 }
             }
             textView.replace(textRange, withText: text)
-            textView.delegate?.textViewDidChange?(textView)
         }
     }
     
