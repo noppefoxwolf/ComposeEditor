@@ -2,6 +2,7 @@ import Combine
 import UIKit
 
 open class AttachmentTextView: NativePlaceholderTextView {
+    public let topAttachmentsView = UIStackView()
     public let bottomAttachmentsView = UIStackView()
     public let leadingAttachmentsView = UIStackView()
     
@@ -30,6 +31,24 @@ open class AttachmentTextView: NativePlaceholderTextView {
             ),
         ])
         
+        topAttachmentsView.axis = .vertical
+        topAttachmentsView.spacing = UIStackView.spacingUseSystem
+        topAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
+        topAttachmentsView.isLayoutMarginsRelativeArrangement = true
+        topAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(topAttachmentsView)
+        NSLayoutConstraint.activate([
+            topAttachmentsView.topAnchor.constraint(
+                equalTo: textInputView.topAnchor
+            ),
+            topAttachmentsView.leadingAnchor.constraint(
+                equalTo: textInputView.leadingAnchor
+            ),
+            topAttachmentsView.trailingAnchor.constraint(
+                equalTo: textInputView.trailingAnchor
+            ),
+        ])
+        
         bottomAttachmentsView.axis = .vertical
         bottomAttachmentsView.spacing = UIStackView.spacingUseSystem
         bottomAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
@@ -53,8 +72,12 @@ open class AttachmentTextView: NativePlaceholderTextView {
     
     open override func layoutSubviews() {
         super.layoutSubviews()
-        textContainerInset.left = leadingAttachmentsView.frame.width
+        
+        textContainerInset.top = topAttachmentsView.frame.height
         textContainerInset.bottom = bottomAttachmentsView.frame.height
-        bottomAttachmentsView.layoutMargins.left = leadingAttachmentsView.frame.width + textContainer.lineFragmentPadding
+        textContainerInset.left = leadingAttachmentsView.frame.width
+        
+        topAttachmentsView.layoutMargins.left = leadingAttachmentsView.frame.width
+        bottomAttachmentsView.layoutMargins.left = leadingAttachmentsView.frame.width
     }
 }

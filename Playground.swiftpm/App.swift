@@ -42,11 +42,14 @@ final class ViewController: UIViewController, UITextViewDelegate {
             view.trailingAnchor.constraint(equalTo: textView.trailingAnchor),
         ])
         
-        let attachmentView = _UIHostingView(rootView: Color.green.frame(height: 44))
-        textView.bottomAttachmentsView.addArrangedSubview(attachmentView)
+        let attachmentView = _UIHostingView(rootView: Color.gray.frame(height: 44))
+        textView.topAttachmentsView.addArrangedSubview(attachmentView)
         
-        let attachmentView2 = _UIHostingView(rootView: Color.red.frame(width: 64, height: 34))
-        textView.leadingAttachmentsView.addArrangedSubview(attachmentView2)
+        let attachmentView2 = _UIHostingView(rootView: Color.gray.frame(height: 44))
+        textView.bottomAttachmentsView.addArrangedSubview(attachmentView2)
+        
+        let attachmentView3 = _UIHostingView(rootView: Color.gray.frame(width: 64, height: 34))
+        textView.leadingAttachmentsView.addArrangedSubview(attachmentView3)
         
         navigationController?.setToolbarHidden(false, animated: false)
         
