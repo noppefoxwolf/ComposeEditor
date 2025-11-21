@@ -16,21 +16,6 @@ open class AttachmentTextView: NativePlaceholderTextView {
     }
     
     func setupViews() {
-        leadingAttachmentsView.axis = .vertical
-        leadingAttachmentsView.spacing = UIStackView.spacingUseSystem
-        leadingAttachmentsView.layoutMargins = .init(top: 6, left: 6, bottom: 0, right: 6)
-        leadingAttachmentsView.isLayoutMarginsRelativeArrangement = true
-        leadingAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(leadingAttachmentsView)
-        NSLayoutConstraint.activate([
-            leadingAttachmentsView.topAnchor.constraint(
-                equalTo: textInputView.topAnchor
-            ),
-            leadingAttachmentsView.leadingAnchor.constraint(
-                equalTo: textInputView.leadingAnchor
-            ),
-        ])
-        
         topAttachmentsView.axis = .vertical
         topAttachmentsView.spacing = UIStackView.spacingUseSystem
         topAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
@@ -46,6 +31,21 @@ open class AttachmentTextView: NativePlaceholderTextView {
             ),
             topAttachmentsView.trailingAnchor.constraint(
                 equalTo: textInputView.trailingAnchor
+            ),
+        ])
+        
+        leadingAttachmentsView.axis = .vertical
+        leadingAttachmentsView.spacing = UIStackView.spacingUseSystem
+        leadingAttachmentsView.layoutMargins = .init(top: 6, left: 6, bottom: 0, right: 6)
+        leadingAttachmentsView.isLayoutMarginsRelativeArrangement = true
+        leadingAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(leadingAttachmentsView)
+        NSLayoutConstraint.activate([
+            leadingAttachmentsView.topAnchor.constraint(
+                equalTo: textInputView.topAnchor
+            ),
+            leadingAttachmentsView.leadingAnchor.constraint(
+                equalTo: textInputView.leadingAnchor
             ),
         ])
         
