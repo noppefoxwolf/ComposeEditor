@@ -2,6 +2,7 @@ import Combine
 import UIKit
 
 open class AttachmentTextView: NativePlaceholderTextView {
+    public let headerAttachmentsView = UIStackView()
     public let topAttachmentsView = UIStackView()
     public let bottomAttachmentsView = UIStackView()
     public let leadingAttachmentsView = UIStackView()
@@ -16,6 +17,24 @@ open class AttachmentTextView: NativePlaceholderTextView {
     }
     
     func setupViews() {
+        headerAttachmentsView.axis = .vertical
+        headerAttachmentsView.spacing = UIStackView.spacingUseSystem
+        headerAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
+        headerAttachmentsView.isLayoutMarginsRelativeArrangement = true
+        headerAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(headerAttachmentsView)
+        NSLayoutConstraint.activate([
+            headerAttachmentsView.topAnchor.constraint(
+                equalTo: textInputView.topAnchor
+            ),
+            headerAttachmentsView.leadingAnchor.constraint(
+                equalTo: frameLayoutGuide.leadingAnchor
+            ),
+            headerAttachmentsView.trailingAnchor.constraint(
+                equalTo: frameLayoutGuide.trailingAnchor
+            ),
+        ])
+        
         topAttachmentsView.axis = .vertical
         topAttachmentsView.spacing = UIStackView.spacingUseSystem
         topAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
@@ -24,7 +43,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
         addSubview(topAttachmentsView)
         NSLayoutConstraint.activate([
             topAttachmentsView.topAnchor.constraint(
-                equalTo: textInputView.topAnchor
+                equalTo: headerAttachmentsView.bottomAnchor
             ),
             topAttachmentsView.leadingAnchor.constraint(
                 equalTo: textInputView.leadingAnchor
@@ -42,7 +61,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
         addSubview(leadingAttachmentsView)
         NSLayoutConstraint.activate([
             leadingAttachmentsView.topAnchor.constraint(
-                equalTo: textInputView.topAnchor
+                equalTo: headerAttachmentsView.bottomAnchor
             ),
             leadingAttachmentsView.leadingAnchor.constraint(
                 equalTo: textInputView.leadingAnchor
@@ -73,7 +92,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        textContainerInset.top = topAttachmentsView.frame.height
+        textContainerInset.top = headerAttachmentsView.frame.height + topAttachmentsView.frame.height
         textContainerInset.bottom = bottomAttachmentsView.frame.height
         textContainerInset.left = leadingAttachmentsView.frame.width
         

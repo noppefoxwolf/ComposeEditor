@@ -43,6 +43,9 @@ final class ViewController: UIViewController, UITextViewDelegate {
             view.trailingAnchor.constraint(equalTo: textView.trailingAnchor),
         ])
         
+        let headerAttachmentView = _UIHostingView(rootView: Color.blue.opacity(0.2).frame(height: 44))
+        textView.headerAttachmentsView.addArrangedSubview(headerAttachmentView)
+        
         let attachmentView = _UIHostingView(rootView: Color.gray.frame(height: 44))
         textView.topAttachmentsView.addArrangedSubview(attachmentView)
         
@@ -123,4 +126,3 @@ final class ViewController: UIViewController, UITextViewDelegate {
         logger.debug("\(#function)")
     }
 }
-
