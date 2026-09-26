@@ -27,6 +27,8 @@ open class AttachmentTextView: NativePlaceholderTextView {
     private let attachmentLayoutGuide = UILayoutGuide()
     private let leadingColumnGuide = UILayoutGuide()
     private let editorColumnGuide = UILayoutGuide()
+    private var isUpdatingTextContainerInset = false
+    private var lastAppliedAttachmentInsets: UIEdgeInsets?
     private lazy var emptyLeadingColumnWidthConstraint: NSLayoutConstraint = {
         let constraint = leadingColumnGuide.widthAnchor.constraint(equalToConstant: 0)
         constraint.priority = .fittingSizeLevel
@@ -190,14 +192,46 @@ open class AttachmentTextView: NativePlaceholderTextView {
     open override func layoutSubviews() {
         super.layoutSubviews()
 
+        updateTextContainerInsetIfNeeded()
+    }
+
+    private func updateTextContainerInsetIfNeeded() {
+        guard !isUpdatingTextContainerInset else { return }
+
+        let availableWidth = textInputView.bounds.width
+        guard availableWidth > 0 else { return }
+
+        let leadingWidth = fittingSize(for: leadingAttachmentsView).width
+        let editorWidth = max(0, availableWidth - leadingWidth)
         let attachmentInsets = UIEdgeInsets(
-            top: headerAttachmentsView.frame.height + topAttachmentsView.frame.height,
-            left: leadingAttachmentsView.frame.width,
-            bottom: bottomAttachmentsView.frame.height,
+            top: fittingHeight(for: headerAttachmentsView, width: availableWidth)
+                + fittingHeight(for: topAttachmentsView, width: editorWidth),
+            left: leadingWidth,
+            bottom: fittingHeight(for: bottomAttachmentsView, width: editorWidth),
             right: textContainerInset.right
         )
-        if textContainerInset != attachmentInsets {
-            textContainerInset = attachmentInsets
+
+        guard lastAppliedAttachmentInsets != attachmentInsets
+            || textContainerInset != attachmentInsets
+        else {
+            return
         }
+
+        isUpdatingTextContainerInset = true
+        lastAppliedAttachmentInsets = attachmentInsets
+        textContainerInset = attachmentInsets
+        isUpdatingTextContainerInset = false
+    }
+
+    private func fittingSize(for view: UIView) -> CGSize {
+        view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+    }
+
+    private func fittingHeight(for view: UIView, width: CGFloat) -> CGFloat {
+        view.systemLayoutSizeFitting(
+            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        ).height
     }
 }
