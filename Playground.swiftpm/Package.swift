@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.4
 
 import PackageDescription
 import AppleProductTypes
@@ -44,7 +44,7 @@ let package = Package(
                 )
             ],
             
-            path: "."
+            path: "Sources/Playground"
         )
     ]
 )
