@@ -1,29 +1,7 @@
 import ComposeEditor
-import SwiftUI
 import UIKit
 
-@main
-struct ExampleApp: SwiftUI.App {
-    var body: some Scene {
-        WindowGroup {
-            ExampleViewControllerRepresentable()
-                .ignoresSafeArea()
-        }
-    }
-}
-
-private struct ExampleViewControllerRepresentable: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UINavigationController {
-        UINavigationController(rootViewController: ComposeViewController())
-    }
-
-    func updateUIViewController(
-        _ uiViewController: UINavigationController,
-        context: Context
-    ) {}
-}
-
-private final class ComposeViewController: UIViewController, UITextViewDelegate {
+final class ComposeViewController: UIViewController, UITextViewDelegate {
     private let textView = ComposeTextView()
     private let characterCountLabel = UILabel()
 

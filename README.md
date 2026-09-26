@@ -4,7 +4,7 @@ ComposeEditor is a simple text editor that uses the Compose UI framework.
 
 # Requirements
 
-- Swift 6.0
+- Swift 6.4
 
 - iOS 17
 
