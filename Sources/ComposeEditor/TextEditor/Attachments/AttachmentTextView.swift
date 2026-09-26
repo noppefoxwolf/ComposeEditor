@@ -44,6 +44,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
         headerAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         leadingAttachmentsView.axis = .vertical
+        leadingAttachmentsView.alignment = .leading
         leadingAttachmentsView.spacing = UIStackView.spacingUseSystem
         leadingAttachmentsView.layoutMargins = .init(top: 6, left: 6, bottom: 0, right: 6)
         leadingAttachmentsView.isLayoutMarginsRelativeArrangement = true
