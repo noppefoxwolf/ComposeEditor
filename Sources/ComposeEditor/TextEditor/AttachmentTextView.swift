@@ -1,12 +1,29 @@
 import UIKit
 
+private final class AttachmentLayoutView: UIView {
+    override func hitTest(_ location: CGPoint, with event: UIEvent?) -> UIView? {
+        guard point(inside: location, with: event) else { return nil }
+
+        for subview in subviews.reversed() {
+            let pointInSubview = convert(location, to: subview)
+            if let hitView = subview.hitTest(pointInSubview, with: event) {
+                return hitView
+            }
+        }
+
+        // The layout view is only a canvas. Let UITextView receive touches
+        // everywhere that is not occupied by an attachment view.
+        return nil
+    }
+}
+
 open class AttachmentTextView: NativePlaceholderTextView {
     public let headerAttachmentsView = UIStackView()
     public let topAttachmentsView = UIStackView()
     public let bottomAttachmentsView = UIStackView()
     public let leadingAttachmentsView = UIStackView()
 
-    private let attachmentLayoutView = UIView()
+    private let attachmentLayoutView = AttachmentLayoutView()
     private let attachmentLayoutGuide = UILayoutGuide()
     private let leadingColumnGuide = UILayoutGuide()
     private let editorColumnGuide = UILayoutGuide()
