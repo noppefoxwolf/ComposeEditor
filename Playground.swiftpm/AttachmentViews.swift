@@ -89,9 +89,11 @@ final class AudienceView: UIView {
         configuration.title = "Public"
         configuration.imagePadding = 6
         configuration.contentInsets = .init(top: 6, leading: 12, bottom: 6, trailing: 12)
+        configuration.titleLineBreakMode = .byClipping
         button.configuration = configuration
-        button.titleLabel?.numberOfLines = 1
-        button.titleLabel?.lineBreakMode = .byClipping
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setContentHuggingPriority(.required, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .horizontal)
         button.setContentHuggingPriority(.required, for: .vertical)
         button.setContentCompressionResistancePriority(.required, for: .vertical)
 
@@ -101,9 +103,13 @@ final class AudienceView: UIView {
         detailLabel.textColor = .secondaryLabel
 
         let stack = UIStackView(arrangedSubviews: [button, detailLabel, UIView()])
+        stack.axis = .horizontal
         stack.alignment = .center
+        stack.distribution = .fill
         stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
+
+        detailLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         addSubview(stack)
         NSLayoutConstraint.activate([

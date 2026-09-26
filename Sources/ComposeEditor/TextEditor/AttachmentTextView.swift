@@ -198,6 +198,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
     private func updateTextContainerInsetIfNeeded() {
         guard !isUpdatingTextContainerInset else { return }
 
+        attachmentLayoutView.layoutIfNeeded()
         let availableWidth = textInputView.bounds.width
         guard availableWidth > 0 else { return }
 
