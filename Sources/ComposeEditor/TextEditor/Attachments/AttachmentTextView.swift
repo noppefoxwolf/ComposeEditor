@@ -186,7 +186,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
         let availableWidth = textInputView.bounds.width
         guard availableWidth > 0 else { return }
 
-        let leadingWidth = fittingSize(for: leadingAttachmentsView).width
+        let leadingWidth = leadingAttachmentsView.frame.width
         let editorWidth = max(0, availableWidth - leadingWidth)
         let attachmentInsets = UIEdgeInsets(
             top: fittingHeight(for: headerAttachmentsView, width: availableWidth)
@@ -206,10 +206,6 @@ open class AttachmentTextView: NativePlaceholderTextView {
         lastAppliedAttachmentInsets = attachmentInsets
         textContainerInset = attachmentInsets
         isUpdatingTextContainerInset = false
-    }
-
-    private func fittingSize(for view: UIView) -> CGSize {
-        view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
     }
 
     private func fittingHeight(for view: UIView, width: CGFloat) -> CGFloat {
