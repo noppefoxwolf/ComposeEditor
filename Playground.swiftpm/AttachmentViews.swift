@@ -90,6 +90,10 @@ final class AudienceView: UIView {
         configuration.imagePadding = 6
         configuration.contentInsets = .init(top: 6, leading: 12, bottom: 6, trailing: 12)
         button.configuration = configuration
+        button.titleLabel?.numberOfLines = 1
+        button.titleLabel?.lineBreakMode = .byClipping
+        button.setContentHuggingPriority(.required, for: .vertical)
+        button.setContentCompressionResistancePriority(.required, for: .vertical)
 
         let detailLabel = UILabel()
         detailLabel.text = "Anyone can see this post"
@@ -107,6 +111,7 @@ final class AudienceView: UIView {
             stack.leadingAnchor.constraint(equalTo: leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            button.heightAnchor.constraint(equalToConstant: 32),
         ])
     }
 
