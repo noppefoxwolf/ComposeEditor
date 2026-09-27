@@ -39,25 +39,25 @@ open class AttachmentTextView: NativePlaceholderTextView {
     private func configureStackViews() {
         headerAttachmentsView.axis = .vertical
         headerAttachmentsView.spacing = UIStackView.spacingUseSystem
-        headerAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
+        headerAttachmentsView.layoutMargins = .zero
         headerAttachmentsView.isLayoutMarginsRelativeArrangement = true
         headerAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         leadingAttachmentsView.axis = .vertical
         leadingAttachmentsView.spacing = UIStackView.spacingUseSystem
-        leadingAttachmentsView.layoutMargins = .init(top: 6, left: 6, bottom: 0, right: 6)
+        leadingAttachmentsView.layoutMargins = .zero
         leadingAttachmentsView.isLayoutMarginsRelativeArrangement = true
         leadingAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         topAttachmentsView.axis = .vertical
         topAttachmentsView.spacing = UIStackView.spacingUseSystem
-        topAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
+        topAttachmentsView.layoutMargins = .zero
         topAttachmentsView.isLayoutMarginsRelativeArrangement = true
         topAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         bottomAttachmentsView.axis = .vertical
         bottomAttachmentsView.spacing = UIStackView.spacingUseSystem
-        bottomAttachmentsView.layoutMargins = .init(top: 6, left: 0, bottom: 6, right: 0)
+        bottomAttachmentsView.layoutMargins = .zero
         bottomAttachmentsView.isLayoutMarginsRelativeArrangement = true
         bottomAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
     }
