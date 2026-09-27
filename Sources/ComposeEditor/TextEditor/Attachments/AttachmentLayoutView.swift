@@ -1,6 +1,13 @@
 import UIKit
 
 final class AttachmentLayoutView: UIView {
+    var onLayout: (() -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        onLayout?()
+    }
+
     override func hitTest(_ location: CGPoint, with event: UIEvent?) -> UIView? {
         guard point(inside: location, with: event) else { return nil }
 

@@ -12,9 +12,11 @@ open class AttachmentTextView: NativePlaceholderTextView {
     private let editorColumnGuide = UILayoutGuide()
     private var isUpdatingTextContainerInset = false
     private var lastAppliedAttachmentInsets: UIEdgeInsets?
-    private lazy var emptyLeadingColumnWidthConstraint: NSLayoutConstraint = {
+    private lazy var leadingColumnWidthConstraint: NSLayoutConstraint = {
+        // A layout guide has no intrinsic size. Keep this width explicit so a
+        // wide text view cannot make the leading column consume the editor's
+        // unused horizontal space.
         let constraint = leadingColumnGuide.widthAnchor.constraint(equalToConstant: 0)
-        constraint.priority = .fittingSizeLevel
         return constraint
     }()
 
@@ -33,6 +35,10 @@ open class AttachmentTextView: NativePlaceholderTextView {
         addAttachmentViews()
         activateLayoutConstraints()
 
+        attachmentLayoutView.onLayout = { [weak self] in
+            self?.updateTextContainerInsetFromResolvedLayout()
+        }
+
         alwaysBounceVertical = true
     }
 
@@ -44,6 +50,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
         headerAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         leadingAttachmentsView.axis = .vertical
+        leadingAttachmentsView.alignment = .leading
         leadingAttachmentsView.spacing = UIStackView.spacingUseSystem
         leadingAttachmentsView.layoutMargins = .zero
         leadingAttachmentsView.isLayoutMarginsRelativeArrangement = true
@@ -123,7 +130,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
             leadingColumnGuide.leadingAnchor.constraint(
                 equalTo: attachmentLayoutGuide.leadingAnchor
             ),
-            emptyLeadingColumnWidthConstraint,
+            leadingColumnWidthConstraint,
             leadingColumnGuide.topAnchor.constraint(
                 equalTo: headerAttachmentsView.bottomAnchor
             ),
@@ -173,20 +180,52 @@ open class AttachmentTextView: NativePlaceholderTextView {
     }
 
     open override func layoutSubviews() {
+        updateLeadingColumnWidth()
         super.layoutSubviews()
 
-        updateTextContainerInsetIfNeeded()
+        updateTextContainerInsetFromResolvedLayout()
     }
 
-    private func updateTextContainerInsetIfNeeded() {
+    /// Invalidates attachment layout so its resolved geometry is applied to
+    /// TextKit during the next layout pass.
+    ///
+    /// Call this when an attachment's intrinsic content size changes outside
+    /// the text view's normal layout pass.
+    public func invalidateAttachmentLayout() {
+        setNeedsLayout()
+    }
+
+    private func updateLeadingColumnWidth() {
+        // Measure the arranged views individually. The stack view itself is
+        // constrained to the guide, so measuring the stack here would include
+        // the guide's currently resolved (and potentially ambiguous) width.
+        let visibleArrangedSubviews = leadingAttachmentsView.arrangedSubviews.filter {
+            !$0.isHidden
+        }
+        guard !visibleArrangedSubviews.isEmpty else {
+            leadingColumnWidthConstraint.constant = 0
+            return
+        }
+
+        let contentWidth = visibleArrangedSubviews
+            .map { fittingWidth(for: $0) }
+            .max() ?? 0
+        let margins = leadingAttachmentsView.layoutMargins
+        let width = contentWidth + margins.left + margins.right
+
+        if leadingColumnWidthConstraint.constant != width {
+            leadingColumnWidthConstraint.constant = width
+        }
+    }
+
+    private func updateTextContainerInsetFromResolvedLayout() {
         guard !isUpdatingTextContainerInset else { return }
 
-        attachmentLayoutView.layoutIfNeeded()
         let availableWidth = textInputView.bounds.width
         guard availableWidth > 0 else { return }
 
-        let leadingWidth = fittingSize(for: leadingAttachmentsView).width
-        let editorWidth = max(0, availableWidth - leadingWidth)
+        let leadingWidth = leadingColumnGuide.layoutFrame.width
+        let editorWidth = editorColumnGuide.layoutFrame.width
         let attachmentInsets = UIEdgeInsets(
             top: fittingHeight(for: headerAttachmentsView, width: availableWidth)
                 + fittingHeight(for: topAttachmentsView, width: editorWidth),
@@ -207,15 +246,15 @@ open class AttachmentTextView: NativePlaceholderTextView {
         isUpdatingTextContainerInset = false
     }
 
-    private func fittingSize(for view: UIView) -> CGSize {
-        view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-    }
-
     private func fittingHeight(for view: UIView, width: CGFloat) -> CGFloat {
         view.systemLayoutSizeFitting(
             CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
             withHorizontalFittingPriority: .required,
             verticalFittingPriority: .fittingSizeLevel
         ).height
+    }
+
+    private func fittingWidth(for view: UIView) -> CGFloat {
+        max(0, view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width)
     }
 }
