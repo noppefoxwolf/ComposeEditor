@@ -123,11 +123,12 @@ if let context = textView.activeSuggestionContext {
 
 The context includes the behavior identifier, current text, selection, token range, and the prefix and suffix around the caret. It is `nil` when there is a selection, marked text, or no registered behavior that recognizes the caret context. Use the context to drive your own search or suggestion UI; ComposeEditor does not provide a suggestion list.
 
-Apply a selected suggestion with the context used to produce it:
+Apply a selected suggestion with the context used to produce it. This works the same way for hashtags, mentions, shortcodes, and custom behaviors; pass the complete replacement token:
 
 ```swift
 guard let context = textView.activeSuggestionContext else { return }
-textView.applySuggestion(":fire:", for: context)
+textView.applySuggestion("#swift", for: context)
+// The same API applies "@alice" or ":fire:" suggestions.
 ```
 
 The editor replaces the full token range through the text view's normal editing pipeline. If the context is stale because the text or selection changed, the suggestion is ignored.
