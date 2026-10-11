@@ -68,6 +68,19 @@ open class TokenTextView: TextEditorTextView {
         return nil
     }
 
+    /// Replaces the token in a suggestion context with the selected suggestion text.
+    ///
+    /// The context must still match the current suggestion context. Stale contexts are ignored.
+    /// The replacement is sent through the text view's delegate and normal editing pipeline.
+    public func applySuggestion(_ replacementText: String, for context: TokenSuggestionContext) {
+        guard activeSuggestionContext == context,
+              let tokenRange = Range(context.tokenRange, in: context.text) else {
+            return
+        }
+
+        virtualKeyboard.replaceText(tokenRange, withText: replacementText)
+    }
+
     public override func didMoveToWindow() {
         super.didMoveToWindow()
         guard window != nil, !didPerformInitialTextScan else { return }
