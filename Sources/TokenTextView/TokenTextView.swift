@@ -8,6 +8,7 @@ open class TokenTextView: TextEditorTextView {
     var pendingEditRange: NSRange?
     var requiresFullScanAfterMarkedText = false
     var didPerformInitialTextScan = false
+    var originalTypingForegroundColor: UIColor?
 
     /// Receives text and editing-state notifications. The host owns and retains the delegate.
     public weak var tokenDelegate: (any TokenTextViewDelegate)?

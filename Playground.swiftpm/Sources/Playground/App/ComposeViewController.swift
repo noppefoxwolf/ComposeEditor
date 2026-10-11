@@ -6,6 +6,14 @@ import UIKit
 final class ComposeViewController: UIViewController, UITextViewDelegate {
     private let textView = ComposeTextView()
     private let characterCountLabel = UILabel()
+    private let shortcodeSuggestionsView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.spacing = 8
+        stackView.isHidden = true
+        return stackView
+    }()
+    private let shortcodeIdentifiers = ["fire", "heart", "star"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -49,8 +57,54 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
     private func configureAttachments() {
         textView.headerAttachmentsView.addArrangedSubview(ReplyPreviewView())
         textView.leadingAttachmentsView.addArrangedSubview(ProfileView())
+        textView.topAttachmentsView.addArrangedSubview(shortcodeSuggestionsView)
         textView.topAttachmentsView.addArrangedSubview(AudienceView())
         textView.bottomAttachmentsView.addArrangedSubview(LinkPreviewView())
+    }
+
+    private func updateShortcodeSuggestions() {
+        guard let context = textView.activeSuggestionContext,
+              context.behaviorIdentifier == "shortcode" else {
+            shortcodeSuggestionsView.isHidden = true
+            return
+        }
+
+        let prefix = context.prefix.lowercased()
+        let suffix = context.suffix.lowercased()
+        let matches = shortcodeIdentifiers.filter {
+            $0.hasPrefix(prefix) && (suffix.isEmpty || $0.hasSuffix(suffix))
+        }
+
+        shortcodeSuggestionsView.arrangedSubviews.forEach { view in
+            shortcodeSuggestionsView.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
+        for identifier in matches {
+            var configuration = UIButton.Configuration.tinted()
+            configuration.title = ":\(identifier):"
+            configuration.buttonSize = .small
+            configuration.cornerStyle = .capsule
+
+            let button = UIButton(configuration: configuration)
+            button.accessibilityHint = "Insert shortcode"
+            button.addAction(UIAction { [weak self] _ in
+                self?.applyShortcodeSuggestion(identifier)
+            }, for: .touchUpInside)
+            shortcodeSuggestionsView.addArrangedSubview(button)
+        }
+        shortcodeSuggestionsView.isHidden = matches.isEmpty
+    }
+
+    private func applyShortcodeSuggestion(_ identifier: String) {
+        guard let context = textView.activeSuggestionContext,
+              context.behaviorIdentifier == "shortcode",
+              let range = Range(context.tokenRange, in: context.text) else {
+            return
+        }
+
+        textView.virtualKeyboard.replaceText(range, withText: ":\(identifier):")
+        updateShortcodeSuggestions()
     }
 
     private func shortcodeAttachment(
@@ -119,7 +173,7 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
     private func insertExampleText() {
         textView.virtualKeyboard.replaceText(
             "This example keeps the attachment views inside the UITextView.\n\n"
-                + "Type :star:, :heart:, or :fire: to turn a shortcode into an inline attachment.\n\n"
+                + "Type : to choose a shortcode, or use :star:, :heart:, and :fire: to insert inline symbol attachments.\n\n"
                 + "The header, leading profile, audience control, and link preview are all supplied through the public attachment slots.\n\n"
                 + String(
                     repeating: "Scroll to inspect how the text and attachments share the editor content. ",
@@ -143,11 +197,13 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
 
     func textViewDidChange(_ textView: UITextView) {
         (textView as? TokenTextView)?.handleTextViewDidChange(textView)
+        updateShortcodeSuggestions()
         updateCharacterCount()
     }
 
     func textViewDidChangeSelection(_ textView: UITextView) {
         (textView as? TokenTextView)?.handleTextViewDidChangeSelection(textView)
+        updateShortcodeSuggestions()
     }
 
     func textView(

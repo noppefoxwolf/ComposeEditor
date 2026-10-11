@@ -3,7 +3,10 @@ import UIKit
 extension TokenTextView {
     func applyBehaviorAttributes(in changedRange: NSRange?) {
         let storage = textStorage
-        guard storage.length > 0 else { return }
+        guard storage.length > 0 else {
+            updateTypingAttributesForegroundColor()
+            return
+        }
 
         let range: NSRange
         if let changedRange {
@@ -24,6 +27,7 @@ extension TokenTextView {
 
         storage.beginEditing()
         for originalColor in originalColors {
+            originalTypingForegroundColor = originalColor.color
             storage.addAttribute(.foregroundColor, value: originalColor.color, range: originalColor.range)
             storage.removeAttribute(.markedTextOriginalForegroundColor, range: originalColor.range)
         }
@@ -41,6 +45,9 @@ extension TokenTextView {
             storage.enumerateAttribute(.foregroundColor, in: match.range, options: []) { value, effectiveRange, _ in
                 let color = value as? UIColor ?? textColor ?? .label
                 foregroundColors.append((effectiveRange, color))
+            }
+            if let originalColor = foregroundColors.first?.color {
+                originalTypingForegroundColor = originalColor
             }
             for originalColor in foregroundColors {
                 storage.addAttribute(
@@ -61,7 +68,14 @@ extension TokenTextView {
     }
 
     func updateTypingAttributesForegroundColor() {
-        guard selectedRange.length == 0, textStorage.length > 0 else { return }
+        guard textStorage.length > 0 else {
+            var attributes = typingAttributes
+            attributes[.foregroundColor] = originalTypingForegroundColor ?? textColor ?? .label
+            attributes.removeValue(forKey: .markedTextOriginalForegroundColor)
+            typingAttributes = attributes
+            return
+        }
+        guard selectedRange.length == 0 else { return }
 
         let location = min(max(selectedRange.location, 0), textStorage.length)
         let candidateLocations = [location, location - 1].filter { $0 >= 0 && $0 < self.textStorage.length }

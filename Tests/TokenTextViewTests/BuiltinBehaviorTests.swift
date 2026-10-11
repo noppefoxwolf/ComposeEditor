@@ -198,4 +198,22 @@ struct BuiltinBehaviorTests {
             #expect(textView.textStorage.attribute(.foregroundColor, at: location, effectiveRange: nil) as? UIColor == originalColor)
         }
     }
+
+    @Test func clearingHashtagResetsTypingForegroundColor() {
+        let textView = makeTextView("")
+        let originalColor = UIColor.systemOrange
+        textView.textColor = originalColor
+        textView.text = "#hashtag"
+        textView.register(HashtagTokenBehavior())
+        textView.applyBehaviorAttributes(in: nil)
+
+        var typingAttributes = textView.typingAttributes
+        typingAttributes[.foregroundColor] = textView.tintColor
+        textView.typingAttributes = typingAttributes
+        textView.text = ""
+        textView.selectedRange = NSRange(location: 0, length: 0)
+        textView.applyBehaviorAttributes(in: nil)
+
+        #expect(textView.typingAttributes[.foregroundColor] as? UIColor == originalColor)
+    }
 }
