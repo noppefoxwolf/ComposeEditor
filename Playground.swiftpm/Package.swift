@@ -43,6 +43,10 @@ let package = Package(
                     package: "ComposeEditor"
                 ),
                 .product(
+                    name: "TokenTextView",
+                    package: "ComposeEditor"
+                ),
+                .product(
                     name: "ComposeEditorTokenBuiltins",
                     package: "ComposeEditor"
                 )

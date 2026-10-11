@@ -1,5 +1,6 @@
 import ComposeEditor
 import ComposeEditorTokenBuiltins
+import TokenTextView
 import UIKit
 
 final class ComposeViewController: UIViewController, UITextViewDelegate {
