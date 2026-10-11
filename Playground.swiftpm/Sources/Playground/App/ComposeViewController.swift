@@ -23,6 +23,13 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         textView.delegate = self
         textView.register(HashtagTokenBehavior())
         textView.register(MastodonMentionTokenBehavior())
+        textView.register(ShortcodeTokenBehavior(
+            maximumTokenLength: 16,
+            supportedIdentifiers: ["fire", "heart", "star"],
+            attachmentProvider: { [weak self] match, font, attributes in
+                self?.shortcodeAttachment(for: match, font: font, attributes: attributes)
+            }
+        ))
         textView.placeholder = "Write something…"
         textView.font = .preferredFont(forTextStyle: .body)
         textView.adjustsFontForContentSizeCategory = true
@@ -45,6 +52,36 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         textView.leadingAttachmentsView.addArrangedSubview(ProfileView())
         textView.topAttachmentsView.addArrangedSubview(AudienceView())
         textView.bottomAttachmentsView.addArrangedSubview(LinkPreviewView())
+    }
+
+    private func shortcodeAttachment(
+        for match: TokenMatch,
+        font: UIFont,
+        attributes: [NSAttributedString.Key: Any]
+    ) -> NSTextAttachment? {
+        let symbols = [
+            "fire": "flame.fill",
+            "heart": "heart.fill",
+            "star": "star.fill",
+        ]
+        guard let symbolName = symbols[match.identifier],
+              let image = UIImage(
+                systemName: symbolName,
+                withConfiguration: UIImage.SymbolConfiguration(pointSize: font.pointSize)
+              ) else {
+            return nil
+        }
+
+        let color = attributes[.foregroundColor] as? UIColor ?? textView.tintColor ?? .label
+        let attachment = NSTextAttachment()
+        attachment.image = image.withTintColor(color, renderingMode: .alwaysOriginal)
+        attachment.bounds = CGRect(
+            x: 0,
+            y: font.descender,
+            width: image.size.width,
+            height: image.size.height
+        )
+        return attachment
     }
 
     private func configureToolbar() {
@@ -83,6 +120,7 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
     private func insertExampleText() {
         textView.virtualKeyboard.replaceText(
             "This example keeps the attachment views inside the UITextView.\n\n"
+                + "Type :star:, :heart:, or :fire: to turn a shortcode into an inline attachment.\n\n"
                 + "The header, leading profile, audience control, and link preview are all supplied through the public attachment slots.\n\n"
                 + String(
                     repeating: "Scroll to inspect how the text and attachments share the editor content. ",

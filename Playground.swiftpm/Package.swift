@@ -50,7 +50,8 @@ let package = Package(
                     name: "ComposeEditorTokenBuiltins",
                     package: "ComposeEditor"
                 )
-            ]
+            ],
+            path: "Sources/Playground"
         )
     ]
 )
