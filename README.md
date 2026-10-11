@@ -135,8 +135,7 @@ let shortcodeSymbols = [
 ]
 
 let shortcodeBehavior = ShortcodeTokenBehavior(
-    maximumTokenLength: 32,
-    supportedIdentifiers: Set(shortcodeSymbols.keys)
+    maximumTokenLength: 32
 ) { match, font, attributes in
     guard let symbolName = shortcodeSymbols[match.identifier],
           let image = UIImage(
@@ -161,7 +160,7 @@ let shortcodeBehavior = ShortcodeTokenBehavior(
 textView.register(shortcodeBehavior)
 ```
 
-The complete token must be separated from neighboring text by whitespace or a text boundary. `supportedIdentifiers` limits which shortcode names are matched. Returning `nil` from the provider leaves a match as editable text. The Playground includes a working SF Symbols attachment example.
+The complete token must be separated from neighboring text by whitespace or a text boundary. Returning `nil` from the provider leaves a match as editable text, so the provider can decide which names your app supports. The Playground includes a working SF Symbols attachment example.
 
 When you need custom matching or styling, implement `TokenBehavior` with a `TokenDetector`, then optionally provide `TokenMatchAttributes` or `TokenAttachmentReplacement`. `TokenDetector.maximumTokenLength` bounds incremental scans, and its optional suggestion search can return the partial token context at the caret.
 

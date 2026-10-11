@@ -10,14 +10,13 @@ public struct ShortcodeTokenBehavior: TokenBehavior {
     public init(
         maximumTokenLength: Int,
         priority: Int = 30,
-        supportedIdentifiers: Set<String>? = nil,
         attachmentProvider: @escaping TokenAttachmentProvider
     ) {
         detector = TokenDetector(
             identifier: "shortcode",
             maximumTokenLength: max(1, maximumTokenLength),
             priority: priority,
-            matchSearch: Self.makeSearch(supportedIdentifiers: supportedIdentifiers),
+            matchSearch: Self.makeSearch(),
             suggestionContextSearch: { text, selectedRange in
                 guard selectedRange.length == 0,
                       let context = Self.shortcodeContext(
@@ -37,13 +36,12 @@ public struct ShortcodeTokenBehavior: TokenBehavior {
         attachmentReplacement = TokenAttachmentReplacement(provider: attachmentProvider)
     }
 
-    private static func makeSearch(supportedIdentifiers: Set<String>?) -> TokenMatchSearch {
+    private static func makeSearch() -> TokenMatchSearch {
         { text, range in
             guard let expression = shortcodeExpression else { return [] }
             return expression.matches(in: text as String, range: range).compactMap { result in
                 guard result.numberOfRanges > 1 else { return nil }
                 let identifier = text.substring(with: result.range(at: 1))
-                guard supportedIdentifiers.map({ $0.contains(identifier) }) ?? true else { return nil }
                 return TokenMatch(
                     range: result.range,
                     identifier: identifier

@@ -25,7 +25,6 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         textView.register(MastodonMentionTokenBehavior())
         textView.register(ShortcodeTokenBehavior(
             maximumTokenLength: 16,
-            supportedIdentifiers: ["fire", "heart", "star"],
             attachmentProvider: { [weak self] match, font, attributes in
                 self?.shortcodeAttachment(for: match, font: font, attributes: attributes)
             }

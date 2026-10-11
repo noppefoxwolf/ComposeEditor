@@ -120,13 +120,14 @@ struct BuiltinBehaviorTests {
         #expect(behavior.attachmentReplacement != nil)
     }
 
-    @Test func shortcodeBehaviorCanRestrictAttachmentReplacementToSupportedIdentifiers() {
+    @Test func shortcodeProviderCanLeaveUnknownTokensAsEditableText() {
         let text = ":star: :unknown:"
         let textView = makeTextView(text)
         textView.register(ShortcodeTokenBehavior(
             maximumTokenLength: 12,
-            supportedIdentifiers: ["star"],
-            attachmentProvider: { _, _, _ in NSTextAttachment() }
+            attachmentProvider: { match, _, _ in
+                match.identifier == "star" ? NSTextAttachment() : nil
+            }
         ))
 
         textView.replaceMatches()
