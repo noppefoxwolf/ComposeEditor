@@ -11,14 +11,32 @@ let package = Package(
         .library(
             name: "ComposeEditor",
             targets: ["ComposeEditor"]),
+        .library(
+            name: "TokenTextView",
+            targets: ["TokenTextView"]),
+        .library(
+            name: "ComposeEditorTokenBuiltins",
+            targets: ["ComposeEditorTokenBuiltins"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "ComposeEditor"),
+            name: "TextEditor"),
+        .target(
+            name: "TokenTextView",
+            dependencies: ["TextEditor"]),
+        .target(
+            name: "ComposeEditor",
+            dependencies: ["TokenTextView"]),
+        .target(
+            name: "ComposeEditorTokenBuiltins",
+            dependencies: ["TokenTextView"]),
         .testTarget(
             name: "ComposeEditorTests",
-            dependencies: ["ComposeEditor"]),
+            dependencies: ["ComposeEditor", "TextEditor"]),
+        .testTarget(
+            name: "TokenTextViewTests",
+            dependencies: ["TokenTextView", "ComposeEditorTokenBuiltins", "TextEditor"]),
     ]
 )

@@ -1,6 +1,7 @@
 import Testing
 import Foundation
 import RegexBuilder
+import TextEditor
 
 @Suite
 struct RegexTests {

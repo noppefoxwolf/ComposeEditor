@@ -1,0 +1,134 @@
+import UIKit
+import TextEditor
+
+/// A TextKit 2 text view that applies registered token detectors and their optional effects.
+open class TokenTextView: TextEditorTextView {
+    var behaviors: [any TokenBehavior] = []
+    var isReplacingMatches = false
+    var pendingEditRange: NSRange?
+    var requiresFullScanAfterMarkedText = false
+    var didPerformInitialTextScan = false
+
+    /// Receives text and editing-state notifications. The host owns and retains the delegate.
+    public weak var tokenDelegate: (any TokenTextViewDelegate)?
+
+    /// Creates a TextKit 2 text view. Register behaviors before adding it to a window when possible.
+    public override init(frame: CGRect, textContainer: NSTextContainer?) {
+        super.init(frame: frame, textContainer: textContainer)
+        precondition(textLayoutManager != nil, "TokenTextView requires TextKit 2.")
+    }
+
+    public required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        precondition(textLayoutManager != nil, "TokenTextView requires TextKit 2.")
+    }
+
+    /// Registers or replaces a behavior with the same detector identifier.
+    public func register(_ behavior: any TokenBehavior) {
+        precondition(behavior.detector.maximumTokenLength > 0, "maximumTokenLength must be positive.")
+        if let index = behaviors.firstIndex(where: { $0.detector.identifier == behavior.detector.identifier }) {
+            behaviors[index] = behavior
+        } else {
+            behaviors.append(behavior)
+        }
+
+        guard didPerformInitialTextScan else { return }
+        replaceMatches()
+        applyBehaviorAttributes(in: nil)
+        tokenDelegate?.tokenTextView(self, didChangeTextIn: nil)
+    }
+
+    /// Removes a registered behavior by detector identifier. Its attachments are restored to text.
+    public func unregisterBehavior(identifier: String) {
+        behaviors.removeAll { $0.detector.identifier == identifier }
+        guard didPerformInitialTextScan else { return }
+        replaceMatches()
+        applyBehaviorAttributes(in: nil)
+        tokenDelegate?.tokenTextView(self, didChangeTextIn: nil)
+    }
+
+    /// The active token context at the caret, for the app to use when searching suggestions.
+    public var activeSuggestionContext: TokenSuggestionContext? {
+        guard selectedRange.length == 0, markedTextRange == nil else { return nil }
+        let text = textStorage.string
+        let nsText = text as NSString
+        for behavior in behaviors.sorted(by: { $0.detector.priority > $1.detector.priority }) {
+            guard let contextSearch = behavior.detector.suggestionContextSearch,
+                  let match = contextSearch(nsText, selectedRange) else { continue }
+            return TokenSuggestionContext(
+                behaviorIdentifier: behavior.detector.identifier,
+                text: text,
+                selectedRange: selectedRange,
+                tokenRange: match.tokenRange,
+                prefix: match.prefix,
+                suffix: match.suffix
+            )
+        }
+        return nil
+    }
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window != nil, !didPerformInitialTextScan else { return }
+        didPerformInitialTextScan = true
+        replaceMatches()
+        applyBehaviorAttributes(in: nil)
+        tokenDelegate?.tokenTextView(self, didChangeTextIn: nil)
+        notifyEditingStateChange()
+    }
+
+    public override func tintColorDidChange() {
+        super.tintColorDidChange()
+        applyBehaviorAttributes(in: nil)
+        tokenDelegate?.tokenTextView(self, didChangeTextIn: nil)
+    }
+
+    public override func deleteBackward() {
+        guard !expandMarkedAttachmentBeforeCaret() else { return }
+        super.deleteBackward()
+    }
+
+    public override func cut(_ sender: Any?) {
+        if let cutAction {
+            cutAction(self)
+            onCut?(self)
+            return
+        }
+        guard let copiedText = markedTextAwareStringForSelection() else {
+            super.cut(sender)
+            return
+        }
+        UIPasteboard.general.string = copiedText
+        insertText("")
+        onCut?(self)
+    }
+
+    public override func copy(_ sender: Any?) {
+        if let copyAction {
+            copyAction(self)
+            onCopy?(self)
+            return
+        }
+        guard let copiedText = markedTextAwareStringForSelection() else {
+            super.copy(sender)
+            return
+        }
+        UIPasteboard.general.string = copiedText
+        onCopy?(self)
+    }
+
+    public override func paste(_ sender: Any?) {
+        if let pasteAction {
+            pasteAction(self)
+            onPaste?(self)
+            return
+        }
+        guard let pastedText = UIPasteboard.general.string else {
+            super.paste(sender)
+            return
+        }
+        insertText(pastedText)
+        onPaste?(self)
+    }
+}
+

@@ -41,10 +41,12 @@ let package = Package(
                 .product(
                     name: "ComposeEditor",
                     package: "ComposeEditor"
+                ),
+                .product(
+                    name: "ComposeEditorTokenBuiltins",
+                    package: "ComposeEditor"
                 )
-            ],
-            
-            path: "Sources/Playground"
+            ]
         )
     ]
 )

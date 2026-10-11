@@ -1,4 +1,5 @@
 import ComposeEditor
+import ComposeEditorTokenBuiltins
 import UIKit
 
 final class ComposeViewController: UIViewController, UITextViewDelegate {
@@ -19,6 +20,8 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
 
     private func configureTextView() {
         textView.delegate = self
+        textView.register(HashtagTokenBehavior())
+        textView.register(MastodonMentionTokenBehavior())
         textView.placeholder = "Write something…"
         textView.font = .preferredFont(forTextStyle: .body)
         textView.adjustsFontForContentSizeCategory = true
@@ -101,6 +104,19 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
     }
 
     func textViewDidChange(_ textView: UITextView) {
+        (textView as? TokenTextView)?.handleTextViewDidChange(textView)
         updateCharacterCount()
+    }
+
+    func textViewDidChangeSelection(_ textView: UITextView) {
+        (textView as? TokenTextView)?.handleTextViewDidChangeSelection(textView)
+    }
+
+    func textView(
+        _ textView: UITextView,
+        shouldChangeTextIn range: NSRange,
+        replacementText text: String
+    ) -> Bool {
+        (textView as? TokenTextView)?.shouldChangeText(in: range, replacementText: text) ?? true
     }
 }
