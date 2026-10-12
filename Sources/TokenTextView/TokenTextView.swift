@@ -79,6 +79,11 @@ open class TokenTextView: TextEditorTextView {
             return
         }
 
+        let replacementEndsAtDocumentEnd = NSMaxRange(context.tokenRange) == textStorage.length
+        let replacementNeedsTrailingSpace = replacementEndsAtDocumentEnd
+            && replacementText.last?.isWhitespace != true
+        let appliedText = replacementNeedsTrailingSpace ? replacementText + " " : replacementText
+
         let originalColor = textStorage.attribute(
             .markedTextOriginalForegroundColor,
             at: context.tokenRange.location,
@@ -89,14 +94,14 @@ open class TokenTextView: TextEditorTextView {
         attributes[.foregroundColor] = originalColor
         typingAttributes = attributes
 
-        virtualKeyboard.replaceText(tokenRange, withText: replacementText)
+        virtualKeyboard.replaceText(tokenRange, withText: appliedText)
 
         let replacementRange = NSRange(
             location: context.tokenRange.location,
-            length: replacementText.utf16.count
+            length: appliedText.utf16.count
         )
         guard NSMaxRange(replacementRange) <= textStorage.length,
-              textStorage.attributedSubstring(from: replacementRange).string == replacementText else {
+              textStorage.attributedSubstring(from: replacementRange).string == appliedText else {
             return
         }
 

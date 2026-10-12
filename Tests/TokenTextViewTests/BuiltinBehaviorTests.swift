@@ -42,6 +42,7 @@ struct BuiltinBehaviorTests {
         #expect(suggestionContext(for: mention, in: "foo@user", caret: 8) == nil)
         #expect(suggestionContext(for: mention, in: "(@user", caret: 6)?.prefix == "user")
         #expect(suggestionContext(for: shortcode, in: "X:star", caret: 6) == nil)
+        #expect(suggestionContext(for: shortcode, in: "hoge:star", caret: 9) == nil)
         #expect(suggestionContext(for: shortcode, in: " :sta", caret: 5)?.prefix == "sta")
     }
 
@@ -59,6 +60,47 @@ struct BuiltinBehaviorTests {
         textView.applySuggestion("#swift", for: context)
 
         #expect(textView.text == "Use #swift now")
+    }
+
+    @Test func applySuggestionAddsTrailingSpaceOnlyWhenNeeded() {
+        let endOfText = makeTextView("Use #sw")
+        endOfText.selectedRange = NSRange(location: endOfText.text.utf16.count, length: 0)
+        endOfText.register(HashtagTokenBehavior())
+
+        guard let endContext = endOfText.activeSuggestionContext else {
+            Issue.record("Expected an active hashtag suggestion context")
+            return
+        }
+        endOfText.applySuggestion("#swift", for: endContext)
+
+        #expect(endOfText.text == "Use #swift ")
+        #expect(endOfText.selectedRange == NSRange(location: endOfText.text.utf16.count, length: 0))
+
+        let beforePunctuation = makeTextView("Use #sw!")
+        let punctuationTokenEnd = (beforePunctuation.text as NSString).range(of: "#sw").location + 3
+        beforePunctuation.selectedRange = NSRange(location: punctuationTokenEnd, length: 0)
+        beforePunctuation.register(HashtagTokenBehavior())
+
+        guard let punctuationContext = beforePunctuation.activeSuggestionContext else {
+            Issue.record("Expected an active hashtag suggestion context before punctuation")
+            return
+        }
+        beforePunctuation.applySuggestion("#swift", for: punctuationContext)
+
+        #expect(beforePunctuation.text == "Use #swift!")
+
+        let beforeExistingSpace = makeTextView("Use #sw ")
+        let spacedTokenEnd = (beforeExistingSpace.text as NSString).range(of: "#sw").location + 3
+        beforeExistingSpace.selectedRange = NSRange(location: spacedTokenEnd, length: 0)
+        beforeExistingSpace.register(HashtagTokenBehavior())
+
+        guard let spacedContext = beforeExistingSpace.activeSuggestionContext else {
+            Issue.record("Expected an active hashtag suggestion context before existing whitespace")
+            return
+        }
+        beforeExistingSpace.applySuggestion("#swift", for: spacedContext)
+
+        #expect(beforeExistingSpace.text == "Use #swift ")
     }
 
     @Test func selectingHashtagSuggestionFromInsideTokenPreservesFollowingTypingColor() {
