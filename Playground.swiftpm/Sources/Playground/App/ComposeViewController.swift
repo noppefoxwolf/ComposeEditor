@@ -6,14 +6,25 @@ import UIKit
 final class ComposeViewController: UIViewController, UITextViewDelegate {
     private let textView = ComposeTextView()
     private let characterCountLabel = UILabel()
-    private let shortcodeSuggestionsView: UIStackView = {
-        let stackView = UIStackView()
-        stackView.axis = .horizontal
-        stackView.spacing = 8
-        stackView.isHidden = true
-        return stackView
-    }()
     private let shortcodeIdentifiers = ["fire", "heart", "star"]
+    private let hashtags = ["swift", "ios", "mastodon", "ComposeEditor"]
+    private let mentions = ["alice", "bob", "noppe", "noppe@mastodon.social"]
+    private lazy var overflowMenuItem = UIBarButtonItem(
+        title: nil,
+        image: UIImage(systemName: "ellipsis.circle"),
+        primaryAction: nil,
+        menu: UIMenu(children: [
+            UIAction(title: "Sample", image: UIImage(systemName: "text.insert")) { [weak self] _ in
+                self?.insertExampleText()
+            },
+            UIAction(title: "Clear", image: UIImage(systemName: "trash")) { [weak self] _ in
+                self?.clearText()
+            },
+            UIAction(title: "Done", image: UIImage(systemName: "keyboard.chevron.compact.down")) { [weak self] _ in
+                self?.textView.resignFirstResponder()
+            },
+        ])
+    )
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,53 +68,89 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
     private func configureAttachments() {
         textView.headerAttachmentsView.addArrangedSubview(ReplyPreviewView())
         textView.leadingAttachmentsView.addArrangedSubview(ProfileView())
-        textView.topAttachmentsView.addArrangedSubview(shortcodeSuggestionsView)
         textView.topAttachmentsView.addArrangedSubview(AudienceView())
         textView.bottomAttachmentsView.addArrangedSubview(LinkPreviewView())
     }
 
-    private func updateShortcodeSuggestions() {
-        guard let context = textView.activeSuggestionContext,
-              context.behaviorIdentifier == "shortcode" else {
-            shortcodeSuggestionsView.isHidden = true
+    private func updateSuggestions() {
+        guard let context = textView.activeSuggestionContext else {
+            setToolbarItems([
+                .flexibleSpace(),
+                UIBarButtonItem(customView: characterCountLabel),
+                overflowMenuItem,
+            ], animated: false)
             return
         }
 
+        let candidates: [String]
+        let marker: String
+        switch context.behaviorIdentifier {
+        case "shortcode":
+            candidates = shortcodeIdentifiers
+            marker = ":"
+        case "hashtag":
+            candidates = hashtags
+            marker = "#"
+        case "mastodon-mention":
+            candidates = mentions
+            marker = "@"
+        default:
+            setToolbarItems([
+                .flexibleSpace(),
+                UIBarButtonItem(customView: characterCountLabel),
+                overflowMenuItem,
+            ], animated: false)
+            return
+        }
         let prefix = context.prefix.lowercased()
         let suffix = context.suffix.lowercased()
-        let matches = shortcodeIdentifiers.filter {
-            $0.hasPrefix(prefix) && (suffix.isEmpty || $0.hasSuffix(suffix))
+        let matches = candidates.filter {
+            let candidate = $0.lowercased()
+            return candidate.hasPrefix(prefix) && (suffix.isEmpty || candidate.hasSuffix(suffix))
         }
 
-        shortcodeSuggestionsView.arrangedSubviews.forEach { view in
-            shortcodeSuggestionsView.removeArrangedSubview(view)
-            view.removeFromSuperview()
+        let suggestionItems = matches.prefix(3).map { candidate in
+            let completeTitle = context.behaviorIdentifier == "shortcode"
+                ? "\(marker)\(candidate)\(marker)"
+                : "\(marker)\(candidate)"
+            let title = completeTitle.count > 14
+                ? String(completeTitle.prefix(12)) + "…"
+                : completeTitle
+            return UIBarButtonItem(
+                title: title,
+                image: nil,
+                primaryAction: UIAction(title: completeTitle) { [weak self] _ in
+                    self?.applySuggestion(candidate, behaviorIdentifier: context.behaviorIdentifier)
+                },
+                menu: nil
+            )
         }
-
-        for identifier in matches {
-            var configuration = UIButton.Configuration.tinted()
-            configuration.title = ":\(identifier):"
-            configuration.buttonSize = .small
-            configuration.cornerStyle = .capsule
-
-            let button = UIButton(configuration: configuration)
-            button.accessibilityHint = "Insert shortcode"
-            button.addAction(UIAction { [weak self] _ in
-                self?.applyShortcodeSuggestion(identifier)
-            }, for: .touchUpInside)
-            shortcodeSuggestionsView.addArrangedSubview(button)
-        }
-        shortcodeSuggestionsView.isHidden = matches.isEmpty
+        setToolbarItems(suggestionItems + [
+            .flexibleSpace(),
+            UIBarButtonItem(customView: characterCountLabel),
+            overflowMenuItem,
+        ], animated: false)
     }
 
-    private func applyShortcodeSuggestion(_ identifier: String) {
+    private func applySuggestion(_ candidate: String, behaviorIdentifier: String) {
         guard let context = textView.activeSuggestionContext,
-              context.behaviorIdentifier == "shortcode" else {
+              context.behaviorIdentifier == behaviorIdentifier else {
             return
         }
 
-        textView.applySuggestion(":\(identifier):", for: context)
-        updateShortcodeSuggestions()
+        let replacement: String
+        switch behaviorIdentifier {
+        case "shortcode":
+            replacement = ":\(candidate):"
+        case "hashtag":
+            replacement = "#\(candidate)"
+        case "mastodon-mention":
+            replacement = "@\(candidate)"
+        default:
+            return
+        }
+        textView.applySuggestion(replacement, for: context)
+        updateSuggestions()
     }
 
     private func shortcodeAttachment(
@@ -145,34 +192,14 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         )
         characterCountLabel.textColor = .secondaryLabel
 
-        setToolbarItems([
-            UIBarButtonItem(
-                title: "Sample",
-                primaryAction: UIAction { [weak self] _ in
-                    self?.insertExampleText()
-                }
-            ),
-            UIBarButtonItem(
-                title: "Clear",
-                primaryAction: UIAction { [weak self] _ in
-                    self?.clearText()
-                }
-            ),
-            UIBarButtonItem.flexibleSpace(),
-            UIBarButtonItem(customView: characterCountLabel),
-            UIBarButtonItem(
-                title: "Done",
-                primaryAction: UIAction { [weak self] _ in
-                    self?.textView.resignFirstResponder()
-                }
-            ),
-        ], animated: false)
+        updateSuggestions()
     }
 
     private func insertExampleText() {
         textView.virtualKeyboard.replaceText(
             "This example keeps the attachment views inside the UITextView.\n\n"
-                + "Type : to choose a shortcode, or use :star:, :heart:, and :fire: to insert inline symbol attachments.\n\n"
+                + "Try # or @ for hashtag and mention suggestions, or type : to choose a shortcode.\n\n"
+                + "Use :star:, :heart:, and :fire: to insert inline symbol attachments.\n\n"
                 + "The header, leading profile, audience control, and link preview are all supplied through the public attachment slots.\n\n"
                 + String(
                     repeating: "Scroll to inspect how the text and attachments share the editor content. ",
@@ -196,13 +223,13 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
 
     func textViewDidChange(_ textView: UITextView) {
         (textView as? TokenTextView)?.handleTextViewDidChange(textView)
-        updateShortcodeSuggestions()
+        updateSuggestions()
         updateCharacterCount()
     }
 
     func textViewDidChangeSelection(_ textView: UITextView) {
         (textView as? TokenTextView)?.handleTextViewDidChangeSelection(textView)
-        updateShortcodeSuggestions()
+        updateSuggestions()
     }
 
     func textView(

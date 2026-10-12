@@ -296,6 +296,10 @@ struct TokenTextViewTests {
     @Test func cutAndPastePreservesAttachment() {
         let source = makeTextView()
         let destination = makeTextView()
+        let pasteboard = UIPasteboard.withUniqueName()
+        defer { UIPasteboard.remove(withName: pasteboard.name) }
+        source.pasteboard = pasteboard
+        destination.pasteboard = pasteboard
         let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 400, height: 800))
         let viewController = UIViewController()
         window.rootViewController = viewController
@@ -311,7 +315,7 @@ struct TokenTextViewTests {
         source.cut(nil)
 
         #expect(source.attributedText.string.isEmpty)
-        #expect(UIPasteboard.general.string == ":star:")
+        #expect(pasteboard.string == ":star:")
 
         #expect(destination.becomeFirstResponder())
         destination.paste(nil)
