@@ -93,6 +93,23 @@ struct TokenTextViewTests {
         #expect(textView.plainText == "A :star: and :star:")
     }
 
+    @Test func plainTextRestoresShortcodesAfterUnicodeText() {
+        let source = "👩🏽‍💻 前 :star: 後 😀 :star: 終"
+        let textView = makeTextView(source)
+        var attachmentCount = 0
+        textView.textStorage.enumerateAttribute(
+            .attachment,
+            in: NSRange(location: 0, length: textView.textStorage.length)
+        ) { value, range, _ in
+            if value != nil {
+                attachmentCount += range.length
+            }
+        }
+
+        #expect(attachmentCount == 2)
+        #expect(textView.plainText == source)
+    }
+
     @Test func customSearchAndAttachmentProviderAreUsed() {
         let prefix = String(repeating: "a", count: 20_000)
         let textView = TokenTextView(frame: .zero, textContainer: nil)
