@@ -61,6 +61,43 @@ struct BuiltinBehaviorTests {
         #expect(textView.text == "Use #swift now")
     }
 
+    @Test func selectingHashtagSuggestionFromInsideTokenPreservesFollowingTypingColor() {
+        let textView = makeTextView("#swift")
+        let originalColor = UIColor.systemOrange
+        textView.textColor = originalColor
+        textView.register(HashtagTokenBehavior())
+        textView.applyBehaviorAttributes(in: nil)
+
+        textView.selectedRange = NSRange(location: 1, length: 0)
+        textView.handleTextViewDidChangeSelection(textView)
+        guard let context = textView.activeSuggestionContext else {
+            Issue.record("Expected an active hashtag suggestion context")
+            return
+        }
+
+        var typingAttributes = textView.typingAttributes
+        typingAttributes[.foregroundColor] = textView.tintColor
+        textView.typingAttributes = typingAttributes
+        textView.applySuggestion("#swift", for: context)
+        textView.applyBehaviorAttributes(in: NSRange(location: 0, length: textView.textStorage.length))
+        textView.handleTextViewDidChangeSelection(textView)
+
+        let caret = textView.selectedRange.location
+        let insertedText = NSAttributedString(
+            string: " x",
+            attributes: textView.typingAttributes
+        )
+        textView.textStorage.replaceCharacters(
+            in: NSRange(location: caret, length: 0),
+            with: insertedText
+        )
+        textView.selectedRange = NSRange(location: caret + 1, length: 0)
+        textView.applyBehaviorAttributes(in: NSRange(location: caret, length: insertedText.length))
+
+        #expect(textView.textStorage.attribute(.foregroundColor, at: caret + 1, effectiveRange: nil) as? UIColor == originalColor)
+        #expect(textView.typingAttributes[.foregroundColor] as? UIColor == originalColor)
+    }
+
     @Test func applySuggestionReplacesWholeMentionToken() {
         let textView = makeTextView("Hi @ali!")
         let tokenRange = (textView.text as NSString).range(of: "@ali")

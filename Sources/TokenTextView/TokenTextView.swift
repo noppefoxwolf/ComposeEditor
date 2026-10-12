@@ -9,6 +9,7 @@ open class TokenTextView: TextEditorTextView {
     var requiresFullScanAfterMarkedText = false
     var didPerformInitialTextScan = false
     var originalTypingForegroundColor: UIColor?
+    var pasteboard = UIPasteboard.general
 
     /// Receives text and editing-state notifications. The host owns and retains the delegate.
     public weak var tokenDelegate: (any TokenTextViewDelegate)?
@@ -78,7 +79,31 @@ open class TokenTextView: TextEditorTextView {
             return
         }
 
+        let originalColor = textStorage.attribute(
+            .markedTextOriginalForegroundColor,
+            at: context.tokenRange.location,
+            effectiveRange: nil
+        ) as? UIColor ?? originalTypingForegroundColor ?? textColor ?? .label
+        originalTypingForegroundColor = originalColor
+        var attributes = typingAttributes
+        attributes[.foregroundColor] = originalColor
+        typingAttributes = attributes
+
         virtualKeyboard.replaceText(tokenRange, withText: replacementText)
+
+        let replacementRange = NSRange(
+            location: context.tokenRange.location,
+            length: replacementText.utf16.count
+        )
+        guard NSMaxRange(replacementRange) <= textStorage.length,
+              textStorage.attributedSubstring(from: replacementRange).string == replacementText else {
+            return
+        }
+
+        textStorage.removeAttribute(.markedTextOriginalForegroundColor, range: replacementRange)
+        textStorage.addAttribute(.foregroundColor, value: originalColor, range: replacementRange)
+        applyBehaviorAttributes(in: replacementRange)
+        updateTypingAttributesForegroundColor()
     }
 
     public override func didMoveToWindow() {
@@ -112,7 +137,7 @@ open class TokenTextView: TextEditorTextView {
             super.cut(sender)
             return
         }
-        UIPasteboard.general.string = copiedText
+        pasteboard.string = copiedText
         insertText("")
         onCut?(self)
     }
@@ -127,7 +152,7 @@ open class TokenTextView: TextEditorTextView {
             super.copy(sender)
             return
         }
-        UIPasteboard.general.string = copiedText
+        pasteboard.string = copiedText
         onCopy?(self)
     }
 
@@ -137,7 +162,7 @@ open class TokenTextView: TextEditorTextView {
             onPaste?(self)
             return
         }
-        guard let pastedText = UIPasteboard.general.string else {
+        guard let pastedText = pasteboard.string else {
             super.paste(sender)
             return
         }

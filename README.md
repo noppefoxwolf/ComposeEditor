@@ -218,7 +218,7 @@ The same pattern is available through `cutAction`/`onCut` and `pasteAction`/`onP
 
 ## Playground
 
-Open `Playground.swiftpm` in Xcode to explore the attachment slots, placeholder, character counter, token styling, shortcode suggestions, and inline shortcode attachments.
+Open `Playground.swiftpm` in Xcode to explore the attachment slots, placeholder, character counter, token styling, hashtag, mention, and shortcode suggestions in the toolbar, and inline shortcode attachments.
 
 ## License
 
