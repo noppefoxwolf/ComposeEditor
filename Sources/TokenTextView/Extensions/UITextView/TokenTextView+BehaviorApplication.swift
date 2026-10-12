@@ -1,6 +1,34 @@
 import UIKit
 
 extension TokenTextView {
+    func restoreMarkedAttachmentsToLiterals() {
+        guard !isReplacingMatches else { return }
+        let range = NSRange(location: 0, length: textStorage.length)
+        let replacements: [AttributedTextReplacement] = textStorage.markedAttachmentLocations(in: range).compactMap { location in
+            guard let attachment = textStorage.markedAttachment(atUTF16Location: location) else { return nil }
+            return textStorage.literalReplacement(for: attachment)
+        }
+        guard !replacements.isEmpty else { return }
+
+        let originalSelection = selectedRange.location
+        var adjustedSelection = originalSelection
+        for replacement in replacements where replacement.range.location < originalSelection {
+            let replacedLength = min(replacement.range.length, originalSelection - replacement.range.location)
+            adjustedSelection += replacement.text.length - replacedLength
+        }
+
+        isReplacingMatches = true
+        defer { isReplacingMatches = false }
+        performTextKit2Editing {
+            textStorage.beginEditing()
+            for replacement in replacements.sorted(by: { $0.range.location > $1.range.location }) {
+                textStorage.replaceCharacters(in: replacement.range, with: replacement.text)
+            }
+            textStorage.endEditing()
+        }
+        selectedRange = NSRange(location: max(0, min(adjustedSelection, textStorage.length)), length: 0)
+    }
+
     func replaceMatches(in changedRange: NSRange? = nil, registersUndo: Bool = false) {
         assertUsesTextKit2()
         guard !isReplacingMatches, !behaviors.isEmpty else { return }
