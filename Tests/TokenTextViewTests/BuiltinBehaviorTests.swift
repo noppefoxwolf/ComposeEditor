@@ -44,6 +44,7 @@ struct BuiltinBehaviorTests {
         #expect(suggestionContext(for: shortcode, in: "X:star", caret: 6) == nil)
         #expect(suggestionContext(for: shortcode, in: "hoge:star", caret: 9) == nil)
         #expect(suggestionContext(for: shortcode, in: " :sta", caret: 5)?.prefix == "sta")
+        #expect(suggestionContext(for: shortcode, in: " :sta!", caret: 5) == nil)
     }
 
     @Test func applySuggestionReplacesWholeHashtagToken() {
@@ -241,7 +242,7 @@ struct BuiltinBehaviorTests {
     @Test func shortcodeBehaviorRequiresWhitespaceBoundaries() {
         let attachment: TokenAttachmentProvider = { _, _, _ in NSTextAttachment() }
         let behavior = ShortcodeTokenBehavior(maximumTokenLength: 7, attachmentProvider: attachment)
-        let text = "X:star: :star: :star::star:"
+        let text = "X:star: :star: :star::star: :star:! :star:、"
         let matches = behavior.detector.matchSearch(text as NSString, NSRange(location: 0, length: (text as NSString).length))
 
         #expect(matches.map(\.identifier) == ["star"])
