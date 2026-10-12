@@ -98,12 +98,11 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
 
     private func applyShortcodeSuggestion(_ identifier: String) {
         guard let context = textView.activeSuggestionContext,
-              context.behaviorIdentifier == "shortcode",
-              let range = Range(context.tokenRange, in: context.text) else {
+              context.behaviorIdentifier == "shortcode" else {
             return
         }
 
-        textView.virtualKeyboard.replaceText(range, withText: ":\(identifier):")
+        textView.applySuggestion(":\(identifier):", for: context)
         updateShortcodeSuggestions()
     }
 
