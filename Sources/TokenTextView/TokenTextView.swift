@@ -56,6 +56,14 @@ open class TokenTextView: TextEditorTextView {
         tokenDelegate?.tokenTextView(self, didChangeTextIn: nil)
     }
 
+    /// Re-runs registered token detectors against the current text.
+    /// Call this when a behavior's attachment provider can now resolve text that it previously left unchanged.
+    public func refreshTokens() {
+        replaceMatches()
+        applyBehaviorAttributes(in: nil)
+        tokenDelegate?.tokenTextView(self, didChangeTextIn: nil)
+    }
+
     /// The active token context at the caret, for the app to use when searching suggestions.
     public var activeSuggestionContext: TokenSuggestionContext? {
         guard selectedRange.length == 0, markedTextRange == nil else { return nil }

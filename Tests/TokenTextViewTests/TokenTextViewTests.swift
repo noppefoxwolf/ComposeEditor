@@ -110,6 +110,34 @@ struct TokenTextViewTests {
         #expect(textView.plainText == source)
     }
 
+    @Test func refreshTokensConvertsPreviouslyUnresolvedShortcodes() {
+        var isAvailable = false
+        let textView = TokenTextView(frame: .zero, textContainer: nil)
+        textView.text = ":later:"
+        textView.register(ClosureTokenBehavior(
+            detector: TokenDetector(
+                identifier: "shortcode",
+                maximumTokenLength: 12,
+                matchSearch: Self.searchColonShortcodes
+            ),
+            attachmentReplacement: TokenAttachmentReplacement(provider: { match, font, _ in
+                guard isAvailable, match.identifier == "later" else { return nil }
+                return Self.imageAttachment(image: UIImage(), font: font)
+            })
+        ))
+        textView.replaceMatches()
+
+        #expect(textView.textStorage.attribute(.attachment, at: 0, effectiveRange: nil) == nil)
+
+        isAvailable = true
+        textView.selectedRange = NSRange(location: textView.textStorage.length, length: 0)
+        textView.refreshTokens()
+
+        #expect(textView.textStorage.attribute(.attachment, at: 0, effectiveRange: nil) != nil)
+        #expect(textView.plainText == ":later:")
+        #expect(textView.selectedRange == NSRange(location: 1, length: 0))
+    }
+
     @Test func customSearchAndAttachmentProviderAreUsed() {
         let prefix = String(repeating: "a", count: 20_000)
         let textView = TokenTextView(frame: .zero, textContainer: nil)
