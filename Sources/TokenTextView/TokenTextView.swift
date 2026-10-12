@@ -14,6 +14,13 @@ open class TokenTextView: TextEditorTextView {
     /// Receives text and editing-state notifications. The host owns and retains the delegate.
     public weak var tokenDelegate: (any TokenTextViewDelegate)?
 
+    /// The text content with TokenTextView-managed attachments restored to their original literals.
+    /// This value is generated on demand and is suitable for saving or sending edited content.
+    public var plainText: String {
+        let range = NSRange(location: 0, length: textStorage.length)
+        return textStorage.plainTextReplacingMarkedAttachments(in: range) ?? textStorage.string
+    }
+
     /// Creates a TextKit 2 text view. Register behaviors before adding it to a window when possible.
     public override init(frame: CGRect, textContainer: NSTextContainer?) {
         super.init(frame: frame, textContainer: textContainer)
