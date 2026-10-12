@@ -45,6 +45,55 @@ struct BuiltinBehaviorTests {
         #expect(suggestionContext(for: shortcode, in: " :sta", caret: 5)?.prefix == "sta")
     }
 
+    @Test func applySuggestionReplacesWholeHashtagToken() {
+        let textView = makeTextView("Use #sw now")
+        let tokenRange = (textView.text as NSString).range(of: "#sw")
+        textView.selectedRange = NSRange(location: NSMaxRange(tokenRange), length: 0)
+        textView.register(HashtagTokenBehavior())
+
+        guard let context = textView.activeSuggestionContext else {
+            Issue.record("Expected an active hashtag suggestion context")
+            return
+        }
+
+        textView.applySuggestion("#swift", for: context)
+
+        #expect(textView.text == "Use #swift now")
+    }
+
+    @Test func applySuggestionReplacesWholeMentionToken() {
+        let textView = makeTextView("Hi @ali!")
+        let tokenRange = (textView.text as NSString).range(of: "@ali")
+        textView.selectedRange = NSRange(location: NSMaxRange(tokenRange), length: 0)
+        textView.register(MastodonMentionTokenBehavior())
+
+        guard let context = textView.activeSuggestionContext else {
+            Issue.record("Expected an active mention suggestion context")
+            return
+        }
+
+        textView.applySuggestion("@alice", for: context)
+
+        #expect(textView.text == "Hi @alice!")
+    }
+
+    @Test func applySuggestionIgnoresStaleContext() {
+        let textView = makeTextView("#sw")
+        textView.selectedRange = NSRange(location: textView.text.utf16.count, length: 0)
+        textView.register(HashtagTokenBehavior())
+
+        guard let staleContext = textView.activeSuggestionContext else {
+            Issue.record("Expected an active hashtag suggestion context")
+            return
+        }
+
+        textView.text = "#tag"
+        textView.selectedRange = NSRange(location: textView.text.utf16.count, length: 0)
+        textView.applySuggestion("#swift", for: staleContext)
+
+        #expect(textView.text == "#tag")
+    }
+
     @Test func suggestionContextSearchRangeStaysBoundedAroundCaret() {
         let middle = TokenContextSearchRange.aroundCaret(
             caretLocation: 50_000,
