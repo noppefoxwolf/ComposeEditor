@@ -109,17 +109,21 @@ extension NSAttributedString {
               range.location <= length,
               range.length <= length - range.location else { return nil }
 
-        let selectedText = NSMutableAttributedString(attributedString: attributedSubstring(from: range))
-        let selectedRange = NSRange(location: 0, length: selectedText.length)
-        let replacements: [AttributedTextReplacement] = selectedText
-            .markedAttachmentLocations(in: selectedRange)
-            .compactMap { location in
-                guard let attachment = selectedText.markedAttachment(atUTF16Location: location) else { return nil }
-                return selectedText.literalReplacement(for: attachment)
-            }
-        for replacement in replacements.reversed() {
-            selectedText.replaceCharacters(in: replacement.range, with: replacement.text.string)
+        let attachmentLocations = markedAttachmentLocations(in: range)
+        guard !attachmentLocations.isEmpty else {
+            return (string as NSString).substring(with: range)
         }
-        return selectedText.string
+
+        let source = string as NSString
+        let result = NSMutableString(capacity: range.length)
+        var cursor = range.location
+        for location in attachmentLocations {
+            guard let attachment = markedAttachment(atUTF16Location: location) else { continue }
+            result.append(source.substring(with: NSRange(location: cursor, length: location - cursor)))
+            result.append(attachment.literalText)
+            cursor = NSMaxRange(attachment.range)
+        }
+        result.append(source.substring(with: NSRange(location: cursor, length: NSMaxRange(range) - cursor)))
+        return result as String
     }
 }

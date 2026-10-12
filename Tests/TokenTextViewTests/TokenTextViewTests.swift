@@ -78,6 +78,19 @@ struct TokenTextViewTests {
 
         #expect(textView.attributedText.attribute(.attachment, at: 2, effectiveRange: nil) != nil)
         #expect(textView.textLayoutManager != nil)
+        #expect(textView.plainText == "A :star:")
+    }
+
+    @Test func plainTextReturnsTextUnchangedWhenThereAreNoTokenAttachments() {
+        let textView = makeTextView("Hello #swift @alice 😀")
+
+        #expect(textView.plainText == "Hello #swift @alice 😀")
+    }
+
+    @Test func plainTextRestoresMultipleShortcodeAttachments() {
+        let textView = makeTextView("A :star: and :star:")
+
+        #expect(textView.plainText == "A :star: and :star:")
     }
 
     @Test func customSearchAndAttachmentProviderAreUsed() {
