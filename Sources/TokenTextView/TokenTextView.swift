@@ -57,8 +57,10 @@ open class TokenTextView: TextEditorTextView {
     }
 
     /// Re-runs registered token detectors against the current text.
-    /// Call this when a behavior's attachment provider can now resolve text that it previously left unchanged.
+    /// Existing managed attachments are restored to their literals before being checked again,
+    /// so unavailable attachments are removed and changed attachments can be refreshed.
     public func refreshTokens() {
+        restoreMarkedAttachmentsToLiterals()
         replaceMatches()
         applyBehaviorAttributes(in: nil)
         tokenDelegate?.tokenTextView(self, didChangeTextIn: nil)

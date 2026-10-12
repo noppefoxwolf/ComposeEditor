@@ -5,6 +5,15 @@ import UIKit
 @Suite(.serialized)
 @MainActor
 struct TokenTextViewTests {
+    @MainActor
+    private final class AttachmentAvailability {
+        var isAvailable: Bool
+
+        init(_ isAvailable: Bool) {
+            self.isAvailable = isAvailable
+        }
+    }
+
     private var images: [String: UIImage] {
         ["star": UIImage()]
     }
@@ -111,7 +120,7 @@ struct TokenTextViewTests {
     }
 
     @Test func refreshTokensConvertsPreviouslyUnresolvedShortcodes() {
-        var isAvailable = false
+        let availability = AttachmentAvailability(false)
         let textView = TokenTextView(frame: .zero, textContainer: nil)
         textView.text = ":later:"
         textView.register(ClosureTokenBehavior(
@@ -121,7 +130,7 @@ struct TokenTextViewTests {
                 matchSearch: Self.searchColonShortcodes
             ),
             attachmentReplacement: TokenAttachmentReplacement(provider: { match, font, _ in
-                guard isAvailable, match.identifier == "later" else { return nil }
+                guard availability.isAvailable, match.identifier == "later" else { return nil }
                 return Self.imageAttachment(image: UIImage(), font: font)
             })
         ))
@@ -129,13 +138,41 @@ struct TokenTextViewTests {
 
         #expect(textView.textStorage.attribute(.attachment, at: 0, effectiveRange: nil) == nil)
 
-        isAvailable = true
+        availability.isAvailable = true
         textView.selectedRange = NSRange(location: textView.textStorage.length, length: 0)
         textView.refreshTokens()
 
         #expect(textView.textStorage.attribute(.attachment, at: 0, effectiveRange: nil) != nil)
         #expect(textView.plainText == ":later:")
         #expect(textView.selectedRange == NSRange(location: 1, length: 0))
+    }
+
+    @Test func refreshTokensRestoresAttachmentsNoLongerAvailable() {
+        let availability = AttachmentAvailability(true)
+        let textView = TokenTextView(frame: .zero, textContainer: nil)
+        textView.text = ":star:"
+        textView.register(ClosureTokenBehavior(
+            detector: TokenDetector(
+                identifier: "shortcode",
+                maximumTokenLength: 7,
+                matchSearch: Self.searchColonShortcodes
+            ),
+            attachmentReplacement: TokenAttachmentReplacement(provider: { match, font, _ in
+                guard availability.isAvailable, match.identifier == "star" else { return nil }
+                return Self.imageAttachment(image: UIImage(), font: font)
+            })
+        ))
+        textView.replaceMatches()
+
+        #expect(textView.textStorage.attribute(.attachment, at: 0, effectiveRange: nil) != nil)
+
+        availability.isAvailable = false
+        textView.selectedRange = NSRange(location: 1, length: 0)
+        textView.refreshTokens()
+
+        #expect(textView.textStorage.attribute(.attachment, at: 0, effectiveRange: nil) == nil)
+        #expect(textView.plainText == ":star:")
+        #expect(textView.selectedRange == NSRange(location: textView.text.utf16.count, length: 0))
     }
 
     @Test func customSearchAndAttachmentProviderAreUsed() {
