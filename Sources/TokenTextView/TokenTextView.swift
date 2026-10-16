@@ -97,7 +97,9 @@ open class TokenTextView: TextEditorTextView {
         }
 
         let replacementEndsAtDocumentEnd = NSMaxRange(context.tokenRange) == textStorage.length
-        let replacementNeedsTrailingSpace = replacementEndsAtDocumentEnd
+        let followingCharacter = context.text[tokenRange.upperBound...].first
+        let replacementPrecedesWord = followingCharacter.map { $0.isLetter || $0.isNumber } ?? false
+        let replacementNeedsTrailingSpace = (replacementEndsAtDocumentEnd || replacementPrecedesWord)
             && replacementText.last?.isWhitespace != true
         let appliedText = replacementNeedsTrailingSpace ? replacementText + " " : replacementText
 

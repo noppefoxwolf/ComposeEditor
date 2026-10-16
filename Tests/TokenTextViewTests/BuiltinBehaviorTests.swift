@@ -47,6 +47,28 @@ struct BuiltinBehaviorTests {
         #expect(suggestionContext(for: shortcode, in: " :sta!", caret: 5) == nil)
     }
 
+    @Test func applyShortcodeSuggestionInsideClosedTokenPreservesFollowingWord() {
+        let textView = makeTextView(":hogehoge:test")
+        textView.selectedRange = NSRange(location: 5, length: 0)
+        textView.register(ShortcodeTokenBehavior(
+            maximumTokenLength: 32,
+            attachmentProvider: { _, _, _ in nil }
+        ))
+
+        guard let context = textView.activeSuggestionContext else {
+            Issue.record("Expected an active shortcode suggestion context")
+            return
+        }
+        #expect(context.prefix == "hoge")
+        #expect(context.suffix == "hoge")
+        #expect(context.tokenRange == NSRange(location: 0, length: 10))
+
+        textView.applySuggestion(":hogehoge:", for: context)
+
+        #expect(textView.text == ":hogehoge: test")
+        #expect(textView.selectedRange == NSRange(location: 11, length: 0))
+    }
+
     @Test func applySuggestionReplacesWholeHashtagToken() {
         let textView = makeTextView("Use #sw now")
         let tokenRange = (textView.text as NSString).range(of: "#sw")
