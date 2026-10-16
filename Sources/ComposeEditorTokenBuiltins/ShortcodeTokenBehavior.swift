@@ -85,6 +85,6 @@ public struct ShortcodeTokenBehavior: TokenBehavior {
     }
 
     private static let shortcodeContextExpression = try? NSRegularExpression(
-        pattern: #"(?<!\S):([A-Za-z0-9_+-]+):?(?!\S)"#
+        pattern: #"(?<!\S):([A-Za-z0-9_+-]+)(?::|(?!\S))"#
     )
 }
