@@ -7,8 +7,13 @@ extension TokenTextView {
     public func handleTextViewDidChange(_ textView: UITextView) {
         textView.assertUsesTextKit2()
         guard !isReplacingMatches else { return }
-        guard textView.markedTextRange == nil else {
+        // A range retained from an earlier composition update does not prove that
+        // this notification's change was tracked as well.
+        if !hasTrackedChangeSinceLastNotification {
             requiresFullScanAfterMarkedText = true
+        }
+        hasTrackedChangeSinceLastNotification = false
+        guard textView.markedTextRange == nil else {
             notifyEditingStateChange()
             return
         }
@@ -43,16 +48,25 @@ extension TokenTextView {
     public func shouldChangeText(in range: NSRange, replacementText: String) -> Bool {
         let textView = self
         textView.assertUsesTextKit2()
-        if pendingEditRange != nil {
-            requiresFullScanAfterMarkedText = true
+        hasTrackedChangeSinceLastNotification = true
+        let replacementLength = replacementText.utf16.count
+        if let pendingRange = pendingEditRange {
+            // Move the accumulated range into the coordinates after this replacement.
+            let delta = replacementLength - range.length
+            let start = min(pendingRange.location, range.location)
+            let previousEnd = NSMaxRange(pendingRange)
+            let adjustedEnd: Int
+            if previousEnd <= range.location {
+                adjustedEnd = previousEnd
+            } else if previousEnd >= NSMaxRange(range) {
+                adjustedEnd = previousEnd + delta
+            } else {
+                adjustedEnd = range.location + replacementLength
+            }
+            let end = max(adjustedEnd, range.location + replacementLength)
+            pendingEditRange = NSRange(location: start, length: end - start)
         } else {
-            pendingEditRange = NSRange(
-                location: range.location,
-                length: replacementText.utf16.count
-            )
-        }
-        if textView.markedTextRange != nil {
-            requiresFullScanAfterMarkedText = true
+            pendingEditRange = NSRange(location: range.location, length: replacementLength)
         }
         return true
     }

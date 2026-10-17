@@ -14,6 +14,115 @@ struct TokenTextViewTests {
         }
     }
 
+    @MainActor
+    private final class CompositionTextView: TokenTextView {
+        var isComposing = false
+
+        override var markedTextRange: UITextRange? {
+            isComposing ? textRange(from: beginningOfDocument, to: beginningOfDocument) : nil
+        }
+    }
+
+    @Test func compositionCommitOnlySearchesTheAccumulatedEditNeighborhood() {
+        let textView = CompositionTextView(frame: .zero, textContainer: nil)
+        textView.text = String(repeating: "a ", count: 2_000)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.addSubview(textView)
+        var searchedLengths: [Int] = []
+        textView.register(ClosureTokenBehavior(detector: TokenDetector(
+            identifier: "recording",
+            maximumTokenLength: 8,
+            matchSearch: { _, range in
+                searchedLengths.append(range.length)
+                return []
+            }
+        )))
+        searchedLengths.removeAll()
+
+        textView.isComposing = true
+        _ = textView.shouldChangeText(in: NSRange(location: 2_000, length: 0), replacementText: "よそく")
+        textView.textStorage.replaceCharacters(in: NSRange(location: 2_000, length: 0), with: "よそく")
+        textView.handleTextViewDidChange(textView)
+        #expect(searchedLengths.isEmpty)
+
+        _ = textView.shouldChangeText(in: NSRange(location: 2_000, length: 3), replacementText: "予測")
+        textView.textStorage.replaceCharacters(in: NSRange(location: 2_000, length: 3), with: "予測")
+        textView.isComposing = false
+        textView.handleTextViewDidChange(textView)
+
+        #expect(searchedLengths.count == 2)
+        #expect(searchedLengths.allSatisfy { $0 == 20 })
+        #expect(textView.pendingEditRange == nil)
+        #expect(!textView.requiresFullScanAfterMarkedText)
+    }
+
+    @Test func accumulatedEditsFollowReplacementCoordinates() {
+        let cases: [(NSRange, NSRange, String, NSRange)] = [
+            (NSRange(location: 20, length: 4), NSRange(location: 5, length: 2), "😀", NSRange(location: 5, length: 19)),
+            (NSRange(location: 20, length: 4), NSRange(location: 5, length: 2), "", NSRange(location: 5, length: 17)),
+            (NSRange(location: 20, length: 4), NSRange(location: 18, length: 10), "x", NSRange(location: 18, length: 1)),
+            (NSRange(location: 20, length: 4), NSRange(location: 22, length: 1), "abcd", NSRange(location: 20, length: 7)),
+            (NSRange(location: 20, length: 4), NSRange(location: 30, length: 0), "x", NSRange(location: 20, length: 11)),
+        ]
+        for (pending, replacementRange, replacement, expected) in cases {
+            let textView = TokenTextView(frame: .zero, textContainer: nil)
+            textView.pendingEditRange = pending
+            _ = textView.shouldChangeText(in: replacementRange, replacementText: replacement)
+            #expect(textView.pendingEditRange == expected)
+            #expect(!textView.requiresFullScanAfterMarkedText)
+        }
+    }
+
+    @Test func untrackedCompositionStillFallsBackToFullSearch() {
+        let textView = CompositionTextView(frame: .zero, textContainer: nil)
+        textView.isComposing = true
+        textView.handleTextViewDidChange(textView)
+        #expect(textView.requiresFullScanAfterMarkedText)
+    }
+
+    @Test(arguments: [true, false])
+    func untrackedLaterCompositionChangeSearchesTokensOutsideTheOldRange(whileComposing: Bool) {
+        let textView = CompositionTextView(frame: .zero, textContainer: nil)
+        textView.text = String(repeating: " ", count: 200)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.addSubview(textView)
+        textView.register(ClosureTokenBehavior(
+            detector: TokenDetector(
+                identifier: "shortcode",
+                maximumTokenLength: 7,
+                matchSearch: Self.searchColonShortcodes
+            ),
+            attachmentReplacement: TokenAttachmentReplacement(provider: { _, font, _ in
+                Self.imageAttachment(image: UIImage(), font: font)
+            })
+        ))
+
+        textView.isComposing = true
+        _ = textView.shouldChangeText(in: NSRange(location: 0, length: 0), replacementText: "a")
+        textView.textStorage.replaceCharacters(in: NSRange(location: 0, length: 0), with: "a")
+        textView.handleTextViewDidChange(textView)
+        #expect(textView.pendingEditRange != nil)
+        #expect(!textView.requiresFullScanAfterMarkedText)
+
+        // Simulate a later update without a corresponding shouldChange callback.
+        textView.isComposing = whileComposing
+        textView.textStorage.replaceCharacters(in: NSRange(location: 100, length: 0), with: ":star:")
+        textView.handleTextViewDidChange(textView)
+        if whileComposing {
+            #expect(textView.requiresFullScanAfterMarkedText)
+            // A subsequent tracked commit must not clear the fallback requirement.
+            _ = textView.shouldChangeText(in: NSRange(location: 0, length: 1), replacementText: "b")
+            textView.textStorage.replaceCharacters(in: NSRange(location: 0, length: 1), with: "b")
+            textView.isComposing = false
+            textView.handleTextViewDidChange(textView)
+        }
+
+        #expect(textView.textStorage.attribute(.attachment, at: 100, effectiveRange: nil) != nil)
+        #expect(textView.pendingEditRange == nil)
+        #expect(!textView.hasTrackedChangeSinceLastNotification)
+        #expect(!textView.requiresFullScanAfterMarkedText)
+    }
+
     private var images: [String: UIImage] {
         ["star": UIImage()]
     }
