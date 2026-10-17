@@ -6,6 +6,7 @@ open class TokenTextView: TextEditorTextView {
     var behaviors: [any TokenBehavior] = []
     var isReplacingMatches = false
     var pendingEditRange: NSRange?
+    var hasTrackedChangeSinceLastNotification = false
     var requiresFullScanAfterMarkedText = false
     var didPerformInitialTextScan = false
     var originalTypingForegroundColor: UIColor?

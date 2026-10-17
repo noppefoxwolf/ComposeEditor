@@ -7,10 +7,13 @@ extension TokenTextView {
     public func handleTextViewDidChange(_ textView: UITextView) {
         textView.assertUsesTextKit2()
         guard !isReplacingMatches else { return }
+        // A range retained from an earlier composition update does not prove that
+        // this notification's change was tracked as well.
+        if !hasTrackedChangeSinceLastNotification {
+            requiresFullScanAfterMarkedText = true
+        }
+        hasTrackedChangeSinceLastNotification = false
         guard textView.markedTextRange == nil else {
-            if pendingEditRange == nil {
-                requiresFullScanAfterMarkedText = true
-            }
             notifyEditingStateChange()
             return
         }
@@ -45,6 +48,7 @@ extension TokenTextView {
     public func shouldChangeText(in range: NSRange, replacementText: String) -> Bool {
         let textView = self
         textView.assertUsesTextKit2()
+        hasTrackedChangeSinceLastNotification = true
         let replacementLength = replacementText.utf16.count
         if let pendingRange = pendingEditRange {
             // Move the accumulated range into the coordinates after this replacement.

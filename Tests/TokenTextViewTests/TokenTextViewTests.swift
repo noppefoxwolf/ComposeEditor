@@ -80,6 +80,49 @@ struct TokenTextViewTests {
         #expect(textView.requiresFullScanAfterMarkedText)
     }
 
+    @Test(arguments: [true, false])
+    func untrackedLaterCompositionChangeSearchesTokensOutsideTheOldRange(whileComposing: Bool) {
+        let textView = CompositionTextView(frame: .zero, textContainer: nil)
+        textView.text = String(repeating: " ", count: 200)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.addSubview(textView)
+        textView.register(ClosureTokenBehavior(
+            detector: TokenDetector(
+                identifier: "shortcode",
+                maximumTokenLength: 7,
+                matchSearch: Self.searchColonShortcodes
+            ),
+            attachmentReplacement: TokenAttachmentReplacement(provider: { _, font, _ in
+                Self.imageAttachment(image: UIImage(), font: font)
+            })
+        ))
+
+        textView.isComposing = true
+        _ = textView.shouldChangeText(in: NSRange(location: 0, length: 0), replacementText: "a")
+        textView.textStorage.replaceCharacters(in: NSRange(location: 0, length: 0), with: "a")
+        textView.handleTextViewDidChange(textView)
+        #expect(textView.pendingEditRange != nil)
+        #expect(!textView.requiresFullScanAfterMarkedText)
+
+        // Simulate a later update without a corresponding shouldChange callback.
+        textView.isComposing = whileComposing
+        textView.textStorage.replaceCharacters(in: NSRange(location: 100, length: 0), with: ":star:")
+        textView.handleTextViewDidChange(textView)
+        if whileComposing {
+            #expect(textView.requiresFullScanAfterMarkedText)
+            // A subsequent tracked commit must not clear the fallback requirement.
+            _ = textView.shouldChangeText(in: NSRange(location: 0, length: 1), replacementText: "b")
+            textView.textStorage.replaceCharacters(in: NSRange(location: 0, length: 1), with: "b")
+            textView.isComposing = false
+            textView.handleTextViewDidChange(textView)
+        }
+
+        #expect(textView.textStorage.attribute(.attachment, at: 100, effectiveRange: nil) != nil)
+        #expect(textView.pendingEditRange == nil)
+        #expect(!textView.hasTrackedChangeSinceLastNotification)
+        #expect(!textView.requiresFullScanAfterMarkedText)
+    }
+
     private var images: [String: UIImage] {
         ["star": UIImage()]
     }
