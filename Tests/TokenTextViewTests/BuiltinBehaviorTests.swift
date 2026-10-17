@@ -213,6 +213,35 @@ struct BuiltinBehaviorTests {
         #expect(middle.length < 1_000)
     }
 
+    @Test func missingShortcodeSuggestionDoesNotFallBackToFullTextMatching() {
+        let textView = makeTextView(":known: " + String(repeating: "x ", count: 20_000) + ":hoge:fuga")
+        textView.selectedRange = NSRange(location: textView.text.utf16.count - 1, length: 0)
+        let shortcode = ShortcodeTokenBehavior(
+            maximumTokenLength: 32,
+            attachmentProvider: { _, _, _ in nil }
+        )
+        var suggestionSelections: [NSRange] = []
+        var matchSearchCalls = 0
+        textView.register(ClosureTokenBehavior(
+            detector: TokenDetector(
+                identifier: "shortcode",
+                maximumTokenLength: 32,
+                matchSearch: { _, _ in
+                    matchSearchCalls += 1
+                    return []
+                },
+                suggestionContextSearch: { text, selection in
+                    suggestionSelections.append(selection)
+                    return shortcode.detector.suggestionContextSearch?(text, selection)
+                }
+            )
+        ))
+
+        #expect(textView.activeSuggestionContext == nil)
+        #expect(suggestionSelections == [textView.selectedRange])
+        #expect(matchSearchCalls == 0)
+    }
+
     @Test func builtinSuggestionContextsFindTokensInLongDocuments() {
         let prefix = String(repeating: "x ", count: 20_000)
         let suffix = String(repeating: " y", count: 20_000)

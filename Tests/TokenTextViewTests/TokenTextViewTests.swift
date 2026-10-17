@@ -470,6 +470,34 @@ struct TokenTextViewTests {
         #expect(searchedTextLengths.allSatisfy { $0 < 100 })
     }
 
+    @Test func incrementalMatchingDoesNotFallBackToFullScanWhenNoTokenMatches() {
+        var searchedTextLengths: [Int] = []
+        var searchedRanges: [NSRange] = []
+        let textView = TokenTextView(frame: .zero, textContainer: nil)
+        textView.text = ":star: " + String(repeating: "x ", count: 20_000) + ":hoge:fuga"
+        textView.register(ClosureTokenBehavior(
+            detector: TokenDetector(
+                identifier: "shortcode",
+                maximumTokenLength: 16,
+                matchSearch: { text, range in
+                    searchedTextLengths.append(text.length)
+                    searchedRanges.append(range)
+                    return Self.searchWhitespaceDelimitedShortcodes(text: text, range: range)
+                }
+            ),
+            attachmentReplacement: TokenAttachmentReplacement(provider: { _, _, _ in NSTextAttachment() })
+        ))
+        let originalText = textView.text
+
+        textView.replaceMatches(in: NSRange(location: textView.textStorage.length - 2, length: 1))
+
+        #expect(searchedTextLengths.count == 1)
+        #expect(searchedTextLengths.allSatisfy { $0 < 100 })
+        #expect(searchedRanges.allSatisfy { $0.length < 100 })
+        #expect(textView.text == originalText)
+        #expect(textView.textStorage.attribute(.attachment, at: 0, effectiveRange: nil) == nil)
+    }
+
     @Test func incrementalEditDoesNotRescanDistantText() {
         let prefix = String(repeating: "a", count: 20_000)
         var isStarAvailable = false
