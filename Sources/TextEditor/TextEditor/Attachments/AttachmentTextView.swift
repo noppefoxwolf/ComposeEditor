@@ -11,7 +11,17 @@ open class AttachmentTextView: NativePlaceholderTextView {
     private let leadingColumnGuide = UILayoutGuide()
     private let editorColumnGuide = UILayoutGuide()
     private var isUpdatingTextContainerInset = false
-    private var lastAppliedAttachmentInsets: UIEdgeInsets?
+    private var baseTextContainerInset = UIEdgeInsets.zero
+
+    /// Assigning this property sets the text padding, excluding attachment space.
+    /// Reading it returns the effective padding, including attachment space.
+    open override var textContainerInset: UIEdgeInsets {
+        didSet {
+            guard !isUpdatingTextContainerInset else { return }
+            baseTextContainerInset = textContainerInset
+            setNeedsLayout()
+        }
+    }
     private lazy var emptyLeadingColumnWidthConstraint: NSLayoutConstraint = {
         let constraint = leadingColumnGuide.widthAnchor.constraint(equalToConstant: 0)
         constraint.priority = .fittingSizeLevel
@@ -20,6 +30,7 @@ open class AttachmentTextView: NativePlaceholderTextView {
 
     public override init(frame: CGRect, textContainer: NSTextContainer?) {
         super.init(frame: frame, textContainer: textContainer)
+        baseTextContainerInset = textContainerInset
         setupViews()
     }
 
@@ -173,49 +184,29 @@ open class AttachmentTextView: NativePlaceholderTextView {
     }
 
     open override func layoutSubviews() {
-        super.layoutSubviews()
-
         updateTextContainerInsetIfNeeded()
+        super.layoutSubviews()
     }
 
     private func updateTextContainerInsetIfNeeded() {
         guard !isUpdatingTextContainerInset else { return }
 
+        // Reuse Auto Layout's resolved geometry instead of running four
+        // independent fitting passes on every scroll or text layout.
         attachmentLayoutView.layoutIfNeeded()
-        let availableWidth = textInputView.bounds.width
-        guard availableWidth > 0 else { return }
+        guard attachmentLayoutView.bounds.width > 0 else { return }
 
-        let leadingWidth = fittingSize(for: leadingAttachmentsView).width
-        let editorWidth = max(0, availableWidth - leadingWidth)
-        let attachmentInsets = UIEdgeInsets(
-            top: fittingHeight(for: headerAttachmentsView, width: availableWidth)
-                + fittingHeight(for: topAttachmentsView, width: editorWidth),
-            left: leadingWidth,
-            bottom: fittingHeight(for: bottomAttachmentsView, width: editorWidth),
-            right: textContainerInset.right
+        let insets = UIEdgeInsets(
+            top: baseTextContainerInset.top + headerAttachmentsView.bounds.height
+                + topAttachmentsView.bounds.height,
+            left: baseTextContainerInset.left + leadingAttachmentsView.bounds.width,
+            bottom: baseTextContainerInset.bottom + bottomAttachmentsView.bounds.height,
+            right: baseTextContainerInset.right
         )
-
-        guard lastAppliedAttachmentInsets != attachmentInsets
-            || textContainerInset != attachmentInsets
-        else {
-            return
-        }
+        guard textContainerInset != insets else { return }
 
         isUpdatingTextContainerInset = true
-        lastAppliedAttachmentInsets = attachmentInsets
-        textContainerInset = attachmentInsets
+        textContainerInset = insets
         isUpdatingTextContainerInset = false
-    }
-
-    private func fittingSize(for view: UIView) -> CGSize {
-        view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-    }
-
-    private func fittingHeight(for view: UIView, width: CGFloat) -> CGFloat {
-        view.systemLayoutSizeFitting(
-            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
-            withHorizontalFittingPriority: .required,
-            verticalFittingPriority: .fittingSizeLevel
-        ).height
     }
 }
