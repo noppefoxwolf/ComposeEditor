@@ -42,6 +42,7 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         textView.delegate = self
         textView.register(HashtagTokenBehavior())
         textView.register(MastodonMentionTokenBehavior())
+        textView.register(URLTokenBehavior())
         textView.register(ShortcodeTokenBehavior(
             maximumTokenLength: 16,
             attachmentProvider: { [weak self] match, font, attributes in
