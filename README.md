@@ -6,7 +6,7 @@ ComposeEditor is a UIKit text editor for compose screens. It combines a TextKit 
 
 - `ComposeTextView`, a ready-to-use compose view that inherits the token editing APIs.
 - `TokenTextView`, a standalone TextKit 2 text view for registering token behaviors.
-- Built-in hashtag, Mastodon mention, and shortcode behaviors in an optional product.
+- Built-in hashtag, Mastodon mention, URL, and shortcode behaviors in an optional product.
 - Inline `NSTextAttachment` replacement for matched tokens, with literal text restored when an attachment is edited or removed.
 - Placeholder text and header, top, bottom, and leading attachment slots that scroll with the editor.
 - Helpers for inserting, appending, replacing, and deleting text through the text view.
@@ -26,7 +26,7 @@ ComposeEditor is a UIKit text editor for compose screens. It combines a TextKit 
 | --- | --- |
 | `ComposeEditor` | `ComposeTextView`, a small facade over `TokenTextView` with the compose editor APIs inherited from its base classes. |
 | `TokenTextView` | Token detection, styling, suggestions, and attachment replacement for a TextKit 2 text view. |
-| `ComposeEditorTokenBuiltins` | Hashtag, Mastodon mention, and shortcode behaviors. |
+| `ComposeEditorTokenBuiltins` | Hashtag, Mastodon mention, URL, and shortcode behaviors. |
 
 The underlying `TextEditor` target is an implementation dependency. Add the `ComposeEditor` product or `TokenTextView` product to use the editor; add `ComposeEditorTokenBuiltins` only if you want its built-in behaviors.
 
@@ -80,9 +80,10 @@ import UIKit
 let textView = ComposeTextView()
 textView.register(HashtagTokenBehavior())
 textView.register(MastodonMentionTokenBehavior())
+textView.register(URLTokenBehavior())
 ```
 
-Hashtags and Mastodon mentions are styled with the text view's tint color. The hashtag behavior recognizes Unicode letters and numbers. The mention behavior recognizes local `@user` names and federated `@user@host.example` names.
+Hashtags, Mastodon mentions, and web URLs are styled with the text view's tint color. The hashtag behavior recognizes Unicode letters and numbers. The mention behavior recognizes local `@user` names and federated `@user@host.example` names.
 
 ## Forward text view delegate callbacks
 
@@ -110,7 +111,7 @@ The editor delays matching while the system keyboard has marked text, then resca
 
 ## Read the active suggestion context
 
-Built-in behaviors identify a partial token around a collapsed caret. Read `activeSuggestionContext` when the selection changes or the text changes:
+Hashtag, mention, and shortcode behaviors identify a partial token around a collapsed caret. Read `activeSuggestionContext` when the selection changes or the text changes:
 
 ```swift
 if let context = textView.activeSuggestionContext {
