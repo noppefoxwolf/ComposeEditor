@@ -13,6 +13,35 @@ struct BuiltinBehaviorTests {
         return textView
     }
 
+    @Test func urlBehaviorMatchesWebURLsWithoutTrailingPunctuationOrEmail() {
+        let behavior = URLTokenBehavior()
+        let text = "😀 (https://example.com/path?q=swift#section), http://example.org. user@example.com"
+        let matches = behavior.detector.matchSearch(text as NSString, NSRange(location: 0, length: text.utf16.count))
+
+        #expect(matches.map(\.identifier) == ["https://example.com/path?q=swift#section", "http://example.org"])
+        #expect(matches.first?.range == (text as NSString).range(of: "https://example.com/path?q=swift#section"))
+        #expect(behavior.detector.suggestionContextSearch == nil)
+    }
+
+    @Test func urlHighlightIncludesFragmentsAndMentionsAndResetsAfterEditing() {
+        let url = "https://example.com/@alice#section"
+        let textView = makeTextView(url + " plain")
+        textView.textColor = .systemOrange
+        textView.register(HashtagTokenBehavior())
+        textView.register(MastodonMentionTokenBehavior())
+        textView.register(URLTokenBehavior())
+        textView.applyBehaviorAttributes(in: nil)
+
+        for location in 0..<url.utf16.count {
+            #expect(textView.textStorage.attribute(.foregroundColor, at: location, effectiveRange: nil) as? UIColor == textView.tintColor)
+        }
+        #expect(textView.textStorage.attribute(.foregroundColor, at: url.utf16.count + 1, effectiveRange: nil) as? UIColor == .systemOrange)
+
+        textView.textStorage.replaceCharacters(in: NSRange(location: 0, length: url.utf16.count), with: "plain")
+        textView.applyBehaviorAttributes(in: NSRange(location: 0, length: 5))
+        #expect(textView.textStorage.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? UIColor == .systemOrange)
+    }
+
     @Test func hashtagBehaviorMatchesUnicodeTags() {
         let behavior = HashtagTokenBehavior()
         let text = "#日本語のタグ #Swift #"
