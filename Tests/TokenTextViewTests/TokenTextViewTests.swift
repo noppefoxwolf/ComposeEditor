@@ -30,7 +30,7 @@ struct TokenTextViewTests {
         window.addSubview(textView)
         var searchedLengths: [Int] = []
         textView.register(ClosureTokenBehavior(detector: TokenDetector(
-            identifier: "recording",
+            identifier: TokenBehaviorIdentifier(rawValue: "recording"),
             maximumTokenLength: 8,
             matchSearch: { _, range in
                 searchedLengths.append(range.length)
@@ -88,7 +88,7 @@ struct TokenTextViewTests {
         window.addSubview(textView)
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "shortcode",
+                identifier: TokenBehaviorIdentifier(rawValue: "shortcode"),
                 maximumTokenLength: 7,
                 matchSearch: Self.searchColonShortcodes
             ),
@@ -169,7 +169,7 @@ struct TokenTextViewTests {
         textView.text = text
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "shortcode",
+                identifier: TokenBehaviorIdentifier(rawValue: "shortcode"),
                 maximumTokenLength: 7,
                 matchSearch: Self.searchColonShortcodes
             ),
@@ -234,7 +234,7 @@ struct TokenTextViewTests {
         textView.text = ":later:"
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "shortcode",
+                identifier: TokenBehaviorIdentifier(rawValue: "shortcode"),
                 maximumTokenLength: 12,
                 matchSearch: Self.searchColonShortcodes
             ),
@@ -262,7 +262,7 @@ struct TokenTextViewTests {
         textView.text = ":star:"
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "shortcode",
+                identifier: TokenBehaviorIdentifier(rawValue: "shortcode"),
                 maximumTokenLength: 7,
                 matchSearch: Self.searchColonShortcodes
             ),
@@ -290,7 +290,7 @@ struct TokenTextViewTests {
         textView.text = prefix + " "
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "shortcode",
+                identifier: TokenBehaviorIdentifier(rawValue: "shortcode"),
                 maximumTokenLength: 6,
                 matchSearch: { text, range in
                 var matches: [TokenMatch] = []
@@ -404,7 +404,7 @@ struct TokenTextViewTests {
         let match = TokenMatch(range: NSRange(location: 1, length: 6), identifier: "star")
         let replacement = source.attachmentReplacement(
             for: match,
-            behaviorIdentifier: "shortcode",
+            behaviorIdentifier: .shortcode,
             using: { _, font, _ in Self.imageAttachment(image: UIImage(), font: font) },
             fallbackFont: .preferredFont(forTextStyle: .body)
         )
@@ -420,7 +420,7 @@ struct TokenTextViewTests {
         textView.text = " :star:"
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "shortcode",
+                identifier: TokenBehaviorIdentifier(rawValue: "shortcode"),
                 maximumTokenLength: 7,
                 matchSearch: Self.searchWhitespaceDelimitedShortcodes
             ),
@@ -561,7 +561,7 @@ struct TokenTextViewTests {
         textView.text = String(repeating: "a", count: 20_000) + "x"
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "bounded-search",
+                identifier: TokenBehaviorIdentifier(rawValue: "bounded-search"),
                 maximumTokenLength: 16,
                 matchSearch: { text, _ in
                     searchedTextLengths.append(text.length)
@@ -587,7 +587,7 @@ struct TokenTextViewTests {
         textView.text = ":star:" + prefix + "x"
         textView.register(ClosureTokenBehavior(
             detector: TokenDetector(
-                identifier: "shortcode",
+                identifier: TokenBehaviorIdentifier(rawValue: "shortcode"),
                 maximumTokenLength: 7,
                 matchSearch: Self.searchColonShortcodes
             ),

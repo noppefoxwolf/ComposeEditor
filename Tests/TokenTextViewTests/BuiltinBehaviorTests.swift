@@ -13,6 +13,17 @@ struct BuiltinBehaviorTests {
         return textView
     }
 
+    @Test func behaviorIdentifiersSupportBuiltinsAndCustomValues() {
+        #expect(HashtagTokenBehavior().detector.identifier == .hashtag)
+        #expect(URLTokenBehavior().detector.identifier == .url)
+        #expect(MastodonMentionTokenBehavior().detector.identifier == .mastodonMention)
+        #expect(TokenBehaviorIdentifier(rawValue: "shortcode") == .shortcode)
+        let custom = TokenBehaviorIdentifier(rawValue: "custom")
+        #expect(custom.rawValue == "custom")
+        #expect(custom != .hashtag)
+        #expect(Set([custom, TokenBehaviorIdentifier(rawValue: "custom")]).count == 1)
+    }
+
     @Test func urlBehaviorMatchesWebURLsWithoutTrailingPunctuationOrEmail() {
         let behavior = URLTokenBehavior()
         let text = "😀 (https://example.com/path?q=swift#section), http://example.org. user@example.com"

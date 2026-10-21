@@ -2,7 +2,7 @@ import Foundation
 
 /// Finds complete tokens and identifies a partial token at the caret.
 public struct TokenDetector {
-    public let identifier: String
+    public let identifier: TokenBehaviorIdentifier
     /// Maximum token length in UTF-16 code units, used to bound incremental scans.
     public let maximumTokenLength: Int
     public let priority: Int
@@ -10,7 +10,7 @@ public struct TokenDetector {
     public let suggestionContextSearch: TokenSuggestionContextSearch?
 
     public init(
-        identifier: String,
+        identifier: TokenBehaviorIdentifier,
         maximumTokenLength: Int,
         priority: Int = 0,
         matchSearch: @escaping TokenMatchSearch,

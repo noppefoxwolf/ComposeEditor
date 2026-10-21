@@ -12,7 +12,7 @@ public struct HashtagTokenBehavior: TokenBehavior {
         priority: Int = 10
     ) {
         detector = TokenDetector(
-            identifier: "hashtag",
+            identifier: .hashtag,
             maximumTokenLength: max(1, maximumTokenLength),
             priority: priority,
             matchSearch: Self.makeSearch(),

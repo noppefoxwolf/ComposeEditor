@@ -13,7 +13,7 @@ public struct ShortcodeTokenBehavior: TokenBehavior {
         attachmentProvider: @escaping TokenAttachmentProvider
     ) {
         detector = TokenDetector(
-            identifier: "shortcode",
+            identifier: .shortcode,
             maximumTokenLength: max(1, maximumTokenLength),
             priority: priority,
             matchSearch: Self.makeSearch(),

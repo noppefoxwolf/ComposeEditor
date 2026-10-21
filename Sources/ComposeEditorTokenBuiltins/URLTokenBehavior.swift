@@ -12,7 +12,7 @@ public struct URLTokenBehavior: TokenBehavior {
         priority: Int = 30
     ) {
         detector = TokenDetector(
-            identifier: "url",
+            identifier: .url,
             maximumTokenLength: max(1, maximumTokenLength),
             priority: priority,
             matchSearch: Self.makeSearch()

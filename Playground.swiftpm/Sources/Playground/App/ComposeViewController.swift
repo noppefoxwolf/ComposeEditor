@@ -86,13 +86,13 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         let candidates: [String]
         let marker: String
         switch context.behaviorIdentifier {
-        case "shortcode":
+        case .shortcode:
             candidates = shortcodeIdentifiers
             marker = ":"
-        case "hashtag":
+        case .hashtag:
             candidates = hashtags
             marker = "#"
-        case "mastodon-mention":
+        case .mastodonMention:
             candidates = mentions
             marker = "@"
         default:
@@ -111,7 +111,7 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         }
 
         let suggestionItems = matches.prefix(3).map { candidate in
-            let completeTitle = context.behaviorIdentifier == "shortcode"
+            let completeTitle = context.behaviorIdentifier == .shortcode
                 ? "\(marker)\(candidate)\(marker)"
                 : "\(marker)\(candidate)"
             let title = completeTitle.count > 14
@@ -133,7 +133,7 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
         ], animated: false)
     }
 
-    private func applySuggestion(_ candidate: String, behaviorIdentifier: String) {
+    private func applySuggestion(_ candidate: String, behaviorIdentifier: TokenBehaviorIdentifier) {
         guard let context = textView.activeSuggestionContext,
               context.behaviorIdentifier == behaviorIdentifier else {
             return
@@ -141,11 +141,11 @@ final class ComposeViewController: UIViewController, UITextViewDelegate {
 
         let replacement: String
         switch behaviorIdentifier {
-        case "shortcode":
+        case .shortcode:
             replacement = ":\(candidate):"
-        case "hashtag":
+        case .hashtag:
             replacement = "#\(candidate)"
-        case "mastodon-mention":
+        case .mastodonMention:
             replacement = "@\(candidate)"
         default:
             return

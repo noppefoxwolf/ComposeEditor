@@ -111,11 +111,16 @@ The editor delays matching while the system keyboard has marked text, then resca
 
 ## Read the active suggestion context
 
+Custom detectors use `TokenBehaviorIdentifier(rawValue: "my-custom-behavior")` as their identifier.
+
 Hashtag, mention, and shortcode behaviors identify a partial token around a collapsed caret. Read `activeSuggestionContext` when the selection changes or the text changes:
 
 ```swift
 if let context = textView.activeSuggestionContext {
-    print(context.behaviorIdentifier) // for example, "hashtag"
+    print(context.behaviorIdentifier.rawValue) // for example, "hashtag"
+    if context.behaviorIdentifier == .hashtag {
+        // Show hashtag suggestions.
+    }
     print(context.prefix)             // text before the caret in the token
     print(context.suffix)             // text after the caret in the token
     print(context.tokenRange)          // full token range in UTF-16 offsets
