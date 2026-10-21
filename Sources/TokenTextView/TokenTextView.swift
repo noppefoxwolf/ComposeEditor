@@ -49,7 +49,7 @@ open class TokenTextView: TextEditorTextView {
     }
 
     /// Removes a registered behavior by detector identifier. Its attachments are restored to text.
-    public func unregisterBehavior(identifier: String) {
+    public func unregisterBehavior(identifier: TokenBehaviorIdentifier) {
         behaviors.removeAll { $0.detector.identifier == identifier }
         guard didPerformInitialTextScan else { return }
         replaceMatches()

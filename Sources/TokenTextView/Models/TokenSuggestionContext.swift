@@ -2,7 +2,7 @@ import Foundation
 
 /// A partial-token context identified by a registered detector at the current caret position.
 public struct TokenSuggestionContext: Sendable, Equatable {
-    public let behaviorIdentifier: String
+    public let behaviorIdentifier: TokenBehaviorIdentifier
     public let text: String
     public let selectedRange: NSRange
     public let tokenRange: NSRange
@@ -10,7 +10,7 @@ public struct TokenSuggestionContext: Sendable, Equatable {
     public let suffix: String
 
     public init(
-        behaviorIdentifier: String,
+        behaviorIdentifier: TokenBehaviorIdentifier,
         text: String,
         selectedRange: NSRange,
         tokenRange: NSRange,

@@ -11,7 +11,7 @@ extension NSAttributedString.Key {
 struct MarkedAttachment {
     let range: NSRange
     let literalText: String
-    let behaviorIdentifier: String
+    let behaviorIdentifier: TokenBehaviorIdentifier
 }
 
 struct AttributedTextReplacement {
@@ -35,7 +35,7 @@ extension NSAttributedString {
         return MarkedAttachment(
             range: NSRange(location: location, length: 1),
             literalText: literalText,
-            behaviorIdentifier: behaviorIdentifier
+            behaviorIdentifier: TokenBehaviorIdentifier(rawValue: behaviorIdentifier)
         )
     }
 
@@ -81,7 +81,7 @@ extension NSAttributedString {
     @MainActor
     func attachmentReplacement(
         for match: TokenMatch,
-        behaviorIdentifier: String,
+        behaviorIdentifier: TokenBehaviorIdentifier,
         using provider: TokenAttachmentProvider,
         fallbackFont: UIFont
     ) -> AttributedTextReplacement? {
@@ -99,7 +99,7 @@ extension NSAttributedString {
         let attachmentRange = NSRange(location: 0, length: attachmentText.length)
         attachmentText.addAttributes(attributes, range: attachmentRange)
         attachmentText.addAttribute(.markedTextLiteral, value: literalText, range: attachmentRange)
-        attachmentText.addAttribute(.markedTextBehavior, value: behaviorIdentifier, range: attachmentRange)
+        attachmentText.addAttribute(.markedTextBehavior, value: behaviorIdentifier.rawValue, range: attachmentRange)
         return AttributedTextReplacement(range: match.range, text: attachmentText)
     }
 

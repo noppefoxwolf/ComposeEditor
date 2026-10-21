@@ -12,7 +12,7 @@ public struct MastodonMentionTokenBehavior: TokenBehavior {
         priority: Int = 20
     ) {
         detector = TokenDetector(
-            identifier: "mastodon-mention",
+            identifier: .mastodonMention,
             maximumTokenLength: max(1, maximumTokenLength),
             priority: priority,
             matchSearch: Self.makeSearch(),

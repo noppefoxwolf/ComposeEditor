@@ -13,6 +13,16 @@ struct BuiltinBehaviorTests {
         return textView
     }
 
+    @Test func behaviorIdentifiersSupportBuiltinsAndCustomValues() {
+        #expect(HashtagTokenBehavior().detector.identifier == .hashtag)
+        #expect(MastodonMentionTokenBehavior().detector.identifier == .mastodonMention)
+        #expect(TokenBehaviorIdentifier(rawValue: "shortcode") == .shortcode)
+        let custom = TokenBehaviorIdentifier(rawValue: "custom")
+        #expect(custom.rawValue == "custom")
+        #expect(custom != .hashtag)
+        #expect(Set([custom, TokenBehaviorIdentifier(rawValue: "custom")]).count == 1)
+    }
+
     @Test func hashtagBehaviorMatchesUnicodeTags() {
         let behavior = HashtagTokenBehavior()
         let text = "#日本語のタグ #Swift #"
