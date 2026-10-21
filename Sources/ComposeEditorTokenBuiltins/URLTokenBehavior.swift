@@ -8,7 +8,7 @@ public struct URLTokenBehavior: TokenBehavior {
     public let attachmentReplacement: TokenAttachmentReplacement? = nil
 
     public init(
-        maximumTokenLength: Int = 2048,
+        maximumTokenLength: Int = 100,
         priority: Int = 30
     ) {
         detector = TokenDetector(
