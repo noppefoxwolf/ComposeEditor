@@ -199,13 +199,13 @@ The slots live in the text view's scrolling content. Use Auto Layout inside each
 
 ```swift
 textView.virtualKeyboard.insertText("Hello")
-textView.virtualKeyboard.appendText(" #Swift", addingWhitespaceIfNeeded: true)
+textView.virtualKeyboard.appendText(" #Swift", smartInsert: true)
 textView.virtualKeyboard.replaceText("Replacement text")
 textView.virtualKeyboard.deleteBackward()
 textView.virtualKeyboard.selectEndOfContent()
 ```
 
-It is useful for compose controls that insert text into the editor. `addingWhitespaceIfNeeded` adds a separating space where needed when inserting or replacing text.
+It is useful for compose controls that insert text into the editor. `smartInsert` adds a separating space where needed when inserting or replacing text.
 
 ## Customize pasteboard actions
 

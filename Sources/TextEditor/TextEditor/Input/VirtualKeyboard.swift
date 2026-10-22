@@ -7,7 +7,7 @@ public final class VirtualKeyboard {
     weak var textView: UITextView? = nil
     let whiteSpace = " "
 
-    public func insertText(_ text: String, addingWhitespaceIfNeeded: Bool = false) {
+    public func insertText(_ text: String, smartInsert: Bool = false) {
         guard let textView else { return }
         guard let selectedTextRange = textView.selectedTextRange else { return }
         let location = textView.selectedRange.location
@@ -20,7 +20,7 @@ public final class VirtualKeyboard {
         )
         if shouldChange ?? true {
             var text = text
-            if addingWhitespaceIfNeeded {
+            if smartInsert {
                 if !textView.hasLeftPadding(at: selectedTextRange.start) && !text.hasPrefix(whiteSpace) {
                     text.insert(contentsOf: whiteSpace, at: text.startIndex)
                 }
@@ -32,37 +32,37 @@ public final class VirtualKeyboard {
         }
     }
 
-    public func appendText(_ text: String, addingWhitespaceIfNeeded: Bool = false) {
+    public func appendText(_ text: String, smartInsert: Bool = false) {
         guard let textView else { return }
         let beforeSelectedRange = textView.selectedTextRange
         textView.selectedTextRange = textView.textRange(
             from: textView.endOfDocument,
             to: textView.endOfDocument
         )
-        insertText(text, addingWhitespaceIfNeeded: addingWhitespaceIfNeeded)
+        insertText(text, smartInsert: smartInsert)
         textView.selectedTextRange = beforeSelectedRange
     }
 
-    public func replaceText(_ text: String, addingWhitespaceIfNeeded: Bool = false) {
+    public func replaceText(_ text: String, smartInsert: Bool = false) {
         guard let textView else { return }
-        replaceText(textView.documentRange, withText: text, addingWhitespaceIfNeeded: addingWhitespaceIfNeeded)
+        replaceText(textView.documentRange, withText: text, smartInsert: smartInsert)
     }
 
     public func replaceText(
         _ range: Range<String.Index>,
         withText text: String,
-        addingWhitespaceIfNeeded: Bool = false
+        smartInsert: Bool = false
     ) {
         guard let textView else { return }
         let textRange = textView.textRange(of: range, in: textView.text)
         guard let textRange else { return }
-        replaceText(textRange, withText: text, addingWhitespaceIfNeeded: addingWhitespaceIfNeeded)
+        replaceText(textRange, withText: text, smartInsert: smartInsert)
     }
 
     public func replaceText(
         _ textRange: UITextRange,
         withText text: String,
-        addingWhitespaceIfNeeded: Bool = false
+        smartInsert: Bool = false
     ) {
         guard let textView else { return }
         let startOffset = textView.offset(from: textRange.start, to: textRange.start)
@@ -75,7 +75,7 @@ public final class VirtualKeyboard {
         )
         if shouldChange ?? true {
             var text = text
-            if addingWhitespaceIfNeeded {
+            if smartInsert {
                 if !textView.hasLeftPadding(at: textRange.start) && !text.hasPrefix(whiteSpace) {
                     text.insert(contentsOf: whiteSpace, at: text.startIndex)
                 }
