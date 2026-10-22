@@ -78,7 +78,7 @@ struct UITextViewCaretTests {
         
         #expect(textView.visualText == "👨‍👩‍👧‍👦Hello, World!⭐[]")
         
-        textView.virtualKeyboard.insertText("Hello", addingWhitespaceIfNeeded: true)
+        textView.virtualKeyboard.insertText("Hello", smartInsert: true)
         
         #expect(textView.visualText == "👨‍👩‍👧‍👦Hello, World!⭐ Hello[]")
     }
