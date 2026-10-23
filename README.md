@@ -193,6 +193,68 @@ textView.bottomAttachmentsView.addArrangedSubview(footerView)
 
 The slots live in the text view's scrolling content. Use Auto Layout inside each arranged view to size its content. The Playground demonstrates all four positions.
 
+### Horizontal safe area and edge-to-edge media
+
+Keep the text view pinned to the containing view's edges. The body, native placeholder,
+and attachment slots respect the horizontal safe area by default. For a media carousel
+that should reach both screen edges, opt its slot into the full text input canvas:
+
+```swift
+textView.contentInsetAdjustmentBehavior = .scrollableAxes
+textView.bottomAttachmentsHorizontalLayout = .fullWidth
+textView.bottomAttachmentsView.addArrangedSubview(mediaCarousel)
+// Leave topAttachmentsHorizontalLayout as .safeArea for CW/audience controls.
+```
+
+`headerAttachmentsHorizontalLayout`, `topAttachmentsHorizontalLayout`,
+`bottomAttachmentsHorizontalLayout`, and `leadingAttachmentsHorizontalLayout`
+accept `.safeArea` (default) or `.fullWidth`. Safe top/bottom slots follow the editor
+column beside the leading attachment. Full-width top/bottom slots span the canvas,
+including the leading column. The leading slot keeps its intrinsic width; its policy
+chooses whether it starts at the safe edge or the canvas edge.
+
+The canvas remains inside `textInputView` and scrolls with the body. With
+`.scrollableAxes` and no horizontal scrolling or horizontal `contentInset`, it spans
+the scroll view's width. If UIKit applies horizontal `adjustedContentInset` (for
+example with `.always`), the canvas follows UIKit's narrower text input area.
+
+Set `textContainerInset` to your design padding only. Reading it returns that padding
+plus attachment space and any horizontal safe area not already covered by
+`adjustedContentInset`. Do not add safe area padding yourself. Insets are recalculated
+after safe area changes and resizing, with physical left/right handled independently.
+This feature does not change `contentInset`, vertical safe area adjustment, or keyboard
+avoidance; keep your existing navigation bar and `keyboardLayoutGuide` setup.
+
+If one slot contains both a carousel and controls that need safe margins, use separate
+slots or wrap those controls in a `UIView` and constrain their horizontal edges to
+the wrapper's `safeAreaLayoutGuide`. Keep the carousel as a direct arranged view.
+A slot's policy applies to every arranged view in that stack. For example:
+
+```swift
+let wrapper = UIView()
+wrapper.addSubview(controls)
+controls.translatesAutoresizingMaskIntoConstraints = false
+NSLayoutConstraint.activate([
+    controls.leadingAnchor.constraint(equalTo: wrapper.safeAreaLayoutGuide.leadingAnchor),
+    controls.trailingAnchor.constraint(equalTo: wrapper.safeAreaLayoutGuide.trailingAnchor),
+    controls.topAnchor.constraint(equalTo: wrapper.topAnchor),
+    controls.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor),
+])
+textView.bottomAttachmentsView.addArrangedSubview(wrapper)
+textView.bottomAttachmentsView.addArrangedSubview(mediaCarousel)
+```
+
+Preserve any additional design padding inside `controls`. For nested stack views whose
+safe area is already handled by the wrapper, set `insetsLayoutMarginsFromSafeArea = false`
+to prevent automatic margins from adding the same horizontal inset again.
+
+Regression renderings from the iPhone 17 Simulator tests (800×600 test window,
+44pt left / 24pt right additional safe area): [body](docs/screenshots/horizontal-safe-area-body.png),
+[placeholder](docs/screenshots/horizontal-safe-area-placeholder.png),
+[RTL column](docs/screenshots/horizontal-safe-area-rtl.png). Orange represents the leading
+attachment and teal represents the full-width media scroll view. These are test view
+renderings, not screenshots of keyboard or physical rotation interactions.
+
 ## Use the virtual keyboard helper
 
 `textView.virtualKeyboard` provides text operations that go through the text view's delegate:
