@@ -1,6 +1,28 @@
 import UIKit
 
 open class AttachmentTextView: NativePlaceholderTextView {
+    /// Horizontal bounds for an attachment slot. Neither option adds text padding.
+    public enum AttachmentHorizontalLayout: Equatable {
+        /// Stay inside the horizontal safe area (and the leading column for top/bottom slots).
+        case safeArea
+        /// Use the entire text input canvas, including the space beside the leading column.
+        /// Use `.scrollableAxes` to keep that canvas as wide as the scroll view.
+        case fullWidth
+    }
+
+    public var headerAttachmentsHorizontalLayout: AttachmentHorizontalLayout = .safeArea {
+        didSet { setNeedsLayout() }
+    }
+    public var topAttachmentsHorizontalLayout: AttachmentHorizontalLayout = .safeArea {
+        didSet { setNeedsLayout() }
+    }
+    public var bottomAttachmentsHorizontalLayout: AttachmentHorizontalLayout = .safeArea {
+        didSet { setNeedsLayout() }
+    }
+    public var leadingAttachmentsHorizontalLayout: AttachmentHorizontalLayout = .safeArea {
+        didSet { setNeedsLayout() }
+    }
+
     public let headerAttachmentsView = UIStackView()
     public let topAttachmentsView = UIStackView()
     public let bottomAttachmentsView = UIStackView()
@@ -12,9 +34,17 @@ open class AttachmentTextView: NativePlaceholderTextView {
     private let editorColumnGuide = UILayoutGuide()
     private var isUpdatingTextContainerInset = false
     private var baseTextContainerInset = UIEdgeInsets.zero
+    private var horizontalConstraints: [NSLayoutConstraint] = []
+    private var horizontalPolicies: [AttachmentHorizontalLayout] = []
+    private lazy var safeAreaLeftConstraint = attachmentLayoutGuide.leftAnchor.constraint(
+        equalTo: attachmentLayoutView.leftAnchor
+    )
+    private lazy var safeAreaRightConstraint = attachmentLayoutGuide.rightAnchor.constraint(
+        equalTo: attachmentLayoutView.rightAnchor
+    )
 
-    /// Assigning this property sets the text padding, excluding attachment space.
-    /// Reading it returns the effective padding, including attachment space.
+    /// Assigning this property sets the design padding, excluding attachments and safe area.
+    /// Reading it includes attachment space and horizontal safe area missing from adjustedContentInset.
     open override var textContainerInset: UIEdgeInsets {
         didSet {
             guard !isUpdatingTextContainerInset else { return }
@@ -51,24 +81,28 @@ open class AttachmentTextView: NativePlaceholderTextView {
         headerAttachmentsView.axis = .vertical
         headerAttachmentsView.spacing = UIStackView.spacingUseSystem
         headerAttachmentsView.layoutMargins = .zero
+        headerAttachmentsView.insetsLayoutMarginsFromSafeArea = false
         headerAttachmentsView.isLayoutMarginsRelativeArrangement = true
         headerAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         leadingAttachmentsView.axis = .vertical
         leadingAttachmentsView.spacing = UIStackView.spacingUseSystem
         leadingAttachmentsView.layoutMargins = .zero
+        leadingAttachmentsView.insetsLayoutMarginsFromSafeArea = false
         leadingAttachmentsView.isLayoutMarginsRelativeArrangement = true
         leadingAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         topAttachmentsView.axis = .vertical
         topAttachmentsView.spacing = UIStackView.spacingUseSystem
         topAttachmentsView.layoutMargins = .zero
+        topAttachmentsView.insetsLayoutMarginsFromSafeArea = false
         topAttachmentsView.isLayoutMarginsRelativeArrangement = true
         topAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
 
         bottomAttachmentsView.axis = .vertical
         bottomAttachmentsView.spacing = UIStackView.spacingUseSystem
         bottomAttachmentsView.layoutMargins = .zero
+        bottomAttachmentsView.insetsLayoutMarginsFromSafeArea = false
         bottomAttachmentsView.isLayoutMarginsRelativeArrangement = true
         bottomAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
     }
@@ -81,6 +115,8 @@ open class AttachmentTextView: NativePlaceholderTextView {
         attachmentLayoutView.addLayoutGuide(editorColumnGuide)
 
         NSLayoutConstraint.activate([
+            safeAreaLeftConstraint,
+            safeAreaRightConstraint,
             attachmentLayoutView.leadingAnchor.constraint(
                 equalTo: textInputView.leadingAnchor
             ),
@@ -94,14 +130,8 @@ open class AttachmentTextView: NativePlaceholderTextView {
                 equalTo: textInputView.bottomAnchor
             ),
 
-            attachmentLayoutGuide.leadingAnchor.constraint(
-                equalTo: attachmentLayoutView.leadingAnchor
-            ),
             attachmentLayoutGuide.topAnchor.constraint(
                 equalTo: attachmentLayoutView.topAnchor
-            ),
-            attachmentLayoutGuide.trailingAnchor.constraint(
-                equalTo: attachmentLayoutView.trailingAnchor
             ),
             attachmentLayoutGuide.bottomAnchor.constraint(
                 equalTo: attachmentLayoutView.bottomAnchor
@@ -124,16 +154,6 @@ open class AttachmentTextView: NativePlaceholderTextView {
             headerAttachmentsView.topAnchor.constraint(
                 equalTo: attachmentLayoutGuide.topAnchor
             ),
-            headerAttachmentsView.leadingAnchor.constraint(
-                equalTo: attachmentLayoutGuide.leadingAnchor
-            ),
-            headerAttachmentsView.trailingAnchor.constraint(
-                equalTo: attachmentLayoutGuide.trailingAnchor
-            ),
-
-            leadingColumnGuide.leadingAnchor.constraint(
-                equalTo: attachmentLayoutGuide.leadingAnchor
-            ),
             emptyLeadingColumnWidthConstraint,
             leadingColumnGuide.topAnchor.constraint(
                 equalTo: headerAttachmentsView.bottomAnchor
@@ -148,8 +168,11 @@ open class AttachmentTextView: NativePlaceholderTextView {
                 equalTo: leadingColumnGuide.trailingAnchor
             ),
 
-            editorColumnGuide.leadingAnchor.constraint(
-                equalTo: leadingColumnGuide.trailingAnchor
+            editorColumnGuide.leftAnchor.constraint(
+                greaterThanOrEqualTo: attachmentLayoutGuide.leftAnchor
+            ),
+            editorColumnGuide.rightAnchor.constraint(
+                lessThanOrEqualTo: attachmentLayoutGuide.rightAnchor
             ),
             editorColumnGuide.topAnchor.constraint(
                 equalTo: headerAttachmentsView.bottomAnchor
@@ -164,28 +187,79 @@ open class AttachmentTextView: NativePlaceholderTextView {
             topAttachmentsView.topAnchor.constraint(
                 equalTo: editorColumnGuide.topAnchor
             ),
-            topAttachmentsView.leadingAnchor.constraint(
-                equalTo: editorColumnGuide.leadingAnchor
-            ),
-            topAttachmentsView.trailingAnchor.constraint(
-                equalTo: editorColumnGuide.trailingAnchor
-            ),
 
             bottomAttachmentsView.bottomAnchor.constraint(
                 equalTo: editorColumnGuide.bottomAnchor
             ),
-            bottomAttachmentsView.leadingAnchor.constraint(
-                equalTo: editorColumnGuide.leadingAnchor
-            ),
-            bottomAttachmentsView.trailingAnchor.constraint(
-                equalTo: editorColumnGuide.trailingAnchor
-            ),
         ])
+        let columnStart = editorColumnGuide.leadingAnchor.constraint(
+            equalTo: leadingColumnGuide.trailingAnchor
+        )
+        // A full-width leading attachment may be narrower than the unsafe area.
+        // In that case the required safe bounds take precedence over its edge.
+        columnStart.priority = .init(999)
+        columnStart.isActive = true
     }
 
     open override func layoutSubviews() {
+        updateHorizontalLayoutIfNeeded()
         updateTextContainerInsetIfNeeded()
         super.layoutSubviews()
+    }
+
+    open override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        setNeedsLayout()
+    }
+
+    open override func adjustedContentInsetDidChange() {
+        super.adjustedContentInsetDidChange()
+        setNeedsLayout()
+    }
+
+    private func updateHorizontalLayoutIfNeeded() {
+        // UITextView's internal text input view may keep a left-to-right semantic
+        // direction even when the public text view is explicitly right-to-left.
+        let direction: UISemanticContentAttribute = effectiveUserInterfaceLayoutDirection == .rightToLeft
+            ? .forceRightToLeft : .forceLeftToRight
+        if attachmentLayoutView.semanticContentAttribute != direction {
+            attachmentLayoutView.semanticContentAttribute = direction
+        }
+        // UIKit already removes adjustedContentInset from textInputView's width.
+        // Only supply the horizontal protection missing from that canvas. Leave
+        // navigation bar and keyboard adjustment entirely to the scroll view.
+        let left = max(0, safeAreaInsets.left - adjustedContentInset.left)
+        let right = max(0, safeAreaInsets.right - adjustedContentInset.right)
+        if safeAreaLeftConstraint.constant != left { safeAreaLeftConstraint.constant = left }
+        if safeAreaRightConstraint.constant != -right { safeAreaRightConstraint.constant = -right }
+        let policies = [
+            headerAttachmentsHorizontalLayout, topAttachmentsHorizontalLayout,
+            bottomAttachmentsHorizontalLayout, leadingAttachmentsHorizontalLayout,
+        ]
+        guard policies != horizontalPolicies else { return }
+        horizontalPolicies = policies
+        NSLayoutConstraint.deactivate(horizontalConstraints)
+        horizontalConstraints = [
+            leadingColumnGuide.leadingAnchor.constraint(
+                equalTo: leadingAttachmentsHorizontalLayout == .safeArea
+                    ? attachmentLayoutGuide.leadingAnchor : attachmentLayoutView.leadingAnchor
+            ),
+        ]
+        for (slot, policy, guide) in [
+            (headerAttachmentsView, headerAttachmentsHorizontalLayout, attachmentLayoutGuide),
+            (topAttachmentsView, topAttachmentsHorizontalLayout, editorColumnGuide),
+            (bottomAttachmentsView, bottomAttachmentsHorizontalLayout, editorColumnGuide),
+        ] {
+            horizontalConstraints += [
+                slot.leadingAnchor.constraint(
+                    equalTo: policy == .safeArea ? guide.leadingAnchor : attachmentLayoutView.leadingAnchor
+                ),
+                slot.trailingAnchor.constraint(
+                    equalTo: policy == .safeArea ? guide.trailingAnchor : attachmentLayoutView.trailingAnchor
+                ),
+            ]
+        }
+        NSLayoutConstraint.activate(horizontalConstraints)
     }
 
     private func updateTextContainerInsetIfNeeded() {
@@ -199,9 +273,10 @@ open class AttachmentTextView: NativePlaceholderTextView {
         let insets = UIEdgeInsets(
             top: baseTextContainerInset.top + headerAttachmentsView.bounds.height
                 + topAttachmentsView.bounds.height,
-            left: baseTextContainerInset.left + leadingAttachmentsView.bounds.width,
+            left: baseTextContainerInset.left + editorColumnGuide.layoutFrame.minX,
             bottom: baseTextContainerInset.bottom + bottomAttachmentsView.bounds.height,
-            right: baseTextContainerInset.right
+            right: baseTextContainerInset.right + attachmentLayoutView.bounds.width
+                - editorColumnGuide.layoutFrame.maxX
         )
         guard textContainerInset != insets else { return }
 
