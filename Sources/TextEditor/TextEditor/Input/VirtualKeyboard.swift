@@ -8,28 +8,10 @@ public final class VirtualKeyboard {
     let whiteSpace = " "
 
     public func insertText(_ text: String, smartInsert: Bool = false) {
-        guard let textView else { return }
-        guard let selectedTextRange = textView.selectedTextRange else { return }
-        let location = textView.selectedRange.location
-        let length = text.count
-        let range = NSRange(location: location, length: length)
-        let shouldChange = textView.delegate?.textView?(
-            textView,
-            shouldChangeTextIn: range,
-            replacementText: text
-        )
-        if shouldChange ?? true {
-            var text = text
-            if smartInsert {
-                if !textView.hasLeftPadding(at: selectedTextRange.start) && !text.hasPrefix(whiteSpace) {
-                    text.insert(contentsOf: whiteSpace, at: text.startIndex)
-                }
-                if !textView.hasRightPadding(at: selectedTextRange.end) && !text.hasSuffix(whiteSpace) {
-                    text.append(contentsOf: whiteSpace)
-                }
-            }
-            textView.insertText(text)
-        }
+        guard let textView,
+              let range = textView.selectedTextRange,
+              let replacement = approvedReplacement(text, in: range, smartInsert: smartInsert) else { return }
+        textView.insertText(replacement)
     }
 
     public func appendText(_ text: String, smartInsert: Bool = false) {
@@ -64,27 +46,32 @@ public final class VirtualKeyboard {
         withText text: String,
         smartInsert: Bool = false
     ) {
-        guard let textView else { return }
-        let startOffset = textView.offset(from: textRange.start, to: textRange.start)
-        let endOffset = textView.offset(from: textRange.end, to: textRange.end)
-        let range = NSRange(location: startOffset, length: endOffset - startOffset)
+        guard let textView,
+              let replacement = approvedReplacement(text, in: textRange, smartInsert: smartInsert) else { return }
+        textView.replace(textRange, withText: replacement)
+    }
+
+    private func approvedReplacement(_ text: String, in textRange: UITextRange, smartInsert: Bool) -> String? {
+        guard let textView else { return nil }
+        var replacement = text
+        if smartInsert {
+            if !textView.hasLeftPadding(at: textRange.start) && !replacement.hasPrefix(whiteSpace) {
+                replacement.insert(contentsOf: whiteSpace, at: replacement.startIndex)
+            }
+            if !textView.hasRightPadding(at: textRange.end) && !replacement.hasSuffix(whiteSpace) {
+                replacement.append(contentsOf: whiteSpace)
+            }
+        }
+        let range = NSRange(
+            location: textView.offset(from: textView.beginningOfDocument, to: textRange.start),
+            length: textView.offset(from: textRange.start, to: textRange.end)
+        )
         let shouldChange = textView.delegate?.textView?(
             textView,
             shouldChangeTextIn: range,
-            replacementText: text
-        )
-        if shouldChange ?? true {
-            var text = text
-            if smartInsert {
-                if !textView.hasLeftPadding(at: textRange.start) && !text.hasPrefix(whiteSpace) {
-                    text.insert(contentsOf: whiteSpace, at: text.startIndex)
-                }
-                if !textView.hasRightPadding(at: textRange.end) && !text.hasSuffix(whiteSpace) {
-                    text.append(contentsOf: whiteSpace)
-                }
-            }
-            textView.replace(textRange, withText: text)
-        }
+            replacementText: replacement
+        ) ?? true
+        return shouldChange ? replacement : nil
     }
 
     public func deleteBackward() {
