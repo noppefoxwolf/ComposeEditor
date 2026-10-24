@@ -166,47 +166,28 @@ open class TokenTextView: TextEditorTextView {
         }
     }
 
-    public override func cut(_ sender: Any?) {
-        if let cutAction {
-            cutAction(self)
-            onCut?(self)
-            return
-        }
+    public override func performDefaultCut(_ sender: Any?) {
         guard let copiedText = markedTextAwareStringForSelection() else {
-            super.cut(sender)
+            super.performDefaultCut(sender)
             return
         }
         pasteboard.string = copiedText
         insertText("")
-        onCut?(self)
     }
 
-    public override func copy(_ sender: Any?) {
-        if let copyAction {
-            copyAction(self)
-            onCopy?(self)
-            return
-        }
+    public override func performDefaultCopy(_ sender: Any?) {
         guard let copiedText = markedTextAwareStringForSelection() else {
-            super.copy(sender)
+            super.performDefaultCopy(sender)
             return
         }
         pasteboard.string = copiedText
-        onCopy?(self)
     }
 
-    public override func paste(_ sender: Any?) {
-        if let pasteAction {
-            pasteAction(self)
-            onPaste?(self)
-            return
-        }
+    public override func performDefaultPaste(_ sender: Any?) {
         guard let pastedText = pasteboard.string else {
-            super.paste(sender)
+            super.performDefaultPaste(sender)
             return
         }
         insertText(pastedText)
-        onPaste?(self)
     }
 }
-

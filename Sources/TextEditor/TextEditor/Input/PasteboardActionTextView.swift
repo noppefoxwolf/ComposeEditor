@@ -14,7 +14,7 @@ open class PasteboardActionTextView: InputAccessoryHostingTextView {
         if let copyAction {
             copyAction(self)
         } else {
-            super.copy(sender)
+            performDefaultCopy(sender)
         }
         onCopy?(self)
     }
@@ -23,7 +23,7 @@ open class PasteboardActionTextView: InputAccessoryHostingTextView {
         if let cutAction {
             cutAction(self)
         } else {
-            super.cut(sender)
+            performDefaultCut(sender)
         }
         onCut?(self)
     }
@@ -32,8 +32,24 @@ open class PasteboardActionTextView: InputAccessoryHostingTextView {
         if let pasteAction {
             pasteAction(self)
         } else {
-            super.paste(sender)
+            performDefaultPaste(sender)
         }
         onPaste?(self)
+    }
+
+    /// Performs copy when no custom `copyAction` is installed.
+    /// Override this hook to customize the default operation while retaining completion notification.
+    open func performDefaultCopy(_ sender: Any?) {
+        super.copy(sender)
+    }
+
+    /// Performs cut when no custom `cutAction` is installed.
+    open func performDefaultCut(_ sender: Any?) {
+        super.cut(sender)
+    }
+
+    /// Performs paste when no custom `pasteAction` is installed.
+    open func performDefaultPaste(_ sender: Any?) {
+        super.paste(sender)
     }
 }
