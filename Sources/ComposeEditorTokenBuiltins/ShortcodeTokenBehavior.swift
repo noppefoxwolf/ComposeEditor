@@ -18,18 +18,12 @@ public struct ShortcodeTokenBehavior: TokenBehavior {
             priority: priority,
             matchSearch: Self.makeSearch(),
             suggestionContextSearch: { text, selectedRange in
-                guard selectedRange.length == 0,
-                      let context = Self.shortcodeContext(
-                          in: text,
-                          caretLocation: selectedRange.location,
-                          maximumTokenLength: maximumTokenLength
-                      ) else {
-                    return nil
-                }
-                return TokenSuggestionMatch(
-                    tokenRange: context.range,
-                    prefix: context.prefix,
-                    suffix: context.suffix
+                guard selectedRange.length == 0 else { return nil }
+                return TokenSuggestionMatch.firstRegexMatch(
+                    in: text,
+                    caretLocation: selectedRange.location,
+                    maximumTokenLength: maximumTokenLength,
+                    expression: Self.shortcodeContextExpression
                 )
             }
         )
@@ -53,36 +47,6 @@ public struct ShortcodeTokenBehavior: TokenBehavior {
     private static let shortcodeExpression = try? NSRegularExpression(
         pattern: #"(?<!\S):([A-Za-z0-9_+-]+):(?!\S)"#
     )
-
-    private static func shortcodeContext(
-        in text: NSString,
-        caretLocation: Int,
-        maximumTokenLength: Int
-    ) -> (range: NSRange, prefix: String, suffix: String)? {
-        let caretLocation = min(max(0, caretLocation), text.length)
-        let searchRange = TokenContextSearchRange.aroundCaret(
-            caretLocation: caretLocation,
-            maximumTokenLength: maximumTokenLength,
-            textLength: text.length
-        )
-        return shortcodeContextExpression?.matches(in: text as String, range: searchRange).compactMap { result in
-            let tokenRange = result.range
-            let nameRange = result.range(at: 1)
-            guard caretLocation >= nameRange.location,
-                  caretLocation <= NSMaxRange(nameRange) else { return nil }
-            return (
-                tokenRange,
-                text.substring(with: NSRange(
-                    location: nameRange.location,
-                    length: caretLocation - nameRange.location
-                )),
-                text.substring(with: NSRange(
-                    location: caretLocation,
-                    length: NSMaxRange(nameRange) - caretLocation
-                ))
-            )
-        }.first
-    }
 
     private static let shortcodeContextExpression = try? NSRegularExpression(
         pattern: #"(?<!\S):([A-Za-z0-9_+-]+)(?::|(?!\S))"#

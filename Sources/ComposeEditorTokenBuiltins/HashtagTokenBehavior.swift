@@ -17,50 +17,16 @@ public struct HashtagTokenBehavior: TokenBehavior {
             priority: priority,
             matchSearch: Self.makeSearch(),
             suggestionContextSearch: { text, selectedRange in
-                guard selectedRange.length == 0,
-                      let context = Self.hashtagContext(
-                          in: text,
-                          caretLocation: selectedRange.location,
-                          maximumTokenLength: maximumTokenLength
-                      ) else {
-                    return nil
-                }
-                return context
+                guard selectedRange.length == 0 else { return nil }
+                return TokenSuggestionMatch.firstRegexMatch(
+                    in: text,
+                    caretLocation: selectedRange.location,
+                    maximumTokenLength: maximumTokenLength,
+                    expression: Self.hashtagContextExpression
+                )
             }
         )
         attributes = TokenMatchAttributes { _, tintColor, _ in [.foregroundColor: tintColor] }
-    }
-
-    private static func hashtagContext(
-        in text: NSString,
-        caretLocation: Int,
-        maximumTokenLength: Int
-    ) -> TokenSuggestionMatch? {
-        let caretLocation = min(max(0, caretLocation), text.length)
-        let searchRange = TokenContextSearchRange.aroundCaret(
-            caretLocation: caretLocation,
-            maximumTokenLength: maximumTokenLength,
-            textLength: text.length
-        )
-        return hashtagContextExpression?.matches(in: text as String, range: searchRange).compactMap { result in
-            let tokenRange = result.range
-            let bodyRange = result.range(at: 1)
-            guard caretLocation > tokenRange.location,
-                  caretLocation <= NSMaxRange(tokenRange),
-                  caretLocation >= bodyRange.location,
-                  caretLocation <= NSMaxRange(bodyRange) else { return nil }
-            return TokenSuggestionMatch(
-                tokenRange: tokenRange,
-                prefix: text.substring(with: NSRange(
-                    location: bodyRange.location,
-                    length: caretLocation - bodyRange.location
-                )),
-                suffix: text.substring(with: NSRange(
-                    location: caretLocation,
-                    length: NSMaxRange(bodyRange) - caretLocation
-                ))
-            )
-        }.first
     }
 
     private static func makeSearch() -> TokenMatchSearch {
