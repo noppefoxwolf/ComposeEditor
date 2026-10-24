@@ -78,33 +78,14 @@ open class AttachmentTextView: NativePlaceholderTextView {
     }
 
     private func configureStackViews() {
-        headerAttachmentsView.axis = .vertical
-        headerAttachmentsView.spacing = UIStackView.spacingUseSystem
-        headerAttachmentsView.layoutMargins = .zero
-        headerAttachmentsView.insetsLayoutMarginsFromSafeArea = false
-        headerAttachmentsView.isLayoutMarginsRelativeArrangement = true
-        headerAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
-
-        leadingAttachmentsView.axis = .vertical
-        leadingAttachmentsView.spacing = UIStackView.spacingUseSystem
-        leadingAttachmentsView.layoutMargins = .zero
-        leadingAttachmentsView.insetsLayoutMarginsFromSafeArea = false
-        leadingAttachmentsView.isLayoutMarginsRelativeArrangement = true
-        leadingAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
-
-        topAttachmentsView.axis = .vertical
-        topAttachmentsView.spacing = UIStackView.spacingUseSystem
-        topAttachmentsView.layoutMargins = .zero
-        topAttachmentsView.insetsLayoutMarginsFromSafeArea = false
-        topAttachmentsView.isLayoutMarginsRelativeArrangement = true
-        topAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
-
-        bottomAttachmentsView.axis = .vertical
-        bottomAttachmentsView.spacing = UIStackView.spacingUseSystem
-        bottomAttachmentsView.layoutMargins = .zero
-        bottomAttachmentsView.insetsLayoutMarginsFromSafeArea = false
-        bottomAttachmentsView.isLayoutMarginsRelativeArrangement = true
-        bottomAttachmentsView.translatesAutoresizingMaskIntoConstraints = false
+        for stack in [headerAttachmentsView, leadingAttachmentsView, topAttachmentsView, bottomAttachmentsView] {
+            stack.axis = .vertical
+            stack.spacing = UIStackView.spacingUseSystem
+            stack.layoutMargins = .zero
+            stack.insetsLayoutMarginsFromSafeArea = false
+            stack.isLayoutMarginsRelativeArrangement = true
+            stack.translatesAutoresizingMaskIntoConstraints = false
+        }
     }
 
     private func addLayoutGuides() {

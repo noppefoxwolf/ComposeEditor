@@ -87,6 +87,42 @@ struct BuiltinBehaviorTests {
         #expect(suggestionContext(for: shortcode, in: " :sta!", caret: 5) == nil)
     }
 
+    @Test(arguments: ["hashtag", "mention", "shortcode"])
+    func suggestionContextsPreserveWholeTokenAndSplitAtEveryCaretPosition(kind: String) throws {
+        let behavior: any TokenBehavior
+        let token: String
+        let name: String
+        switch kind {
+        case "hashtag":
+            behavior = HashtagTokenBehavior()
+            token = "#日本語"
+            name = "日本語"
+        case "mention":
+            behavior = MastodonMentionTokenBehavior()
+            token = "@alice@host.example"
+            name = "alice@host.example"
+        default:
+            behavior = ShortcodeTokenBehavior(maximumTokenLength: 32, attachmentProvider: { _, _, _ in nil })
+            token = ":star:"
+            name = "star"
+        }
+        let text = "😀 \(token) tail"
+        let tokenRange = (text as NSString).range(of: token)
+        let body = name as NSString
+        for prefixLength in 0...body.length {
+            let context = try #require(suggestionContext(
+                for: behavior,
+                in: text,
+                caret: tokenRange.location + 1 + prefixLength
+            ))
+            #expect(context.tokenRange == tokenRange)
+            #expect(context.prefix == body.substring(to: prefixLength))
+            #expect(context.suffix == body.substring(from: prefixLength))
+        }
+        #expect(suggestionContext(for: behavior, in: text, caret: tokenRange.location) == nil)
+        #expect(suggestionContext(for: behavior, in: text, caret: NSMaxRange(tokenRange) + 1) == nil)
+    }
+
     @Test func applyShortcodeSuggestionInsideClosedTokenPreservesFollowingWord() {
         let textView = makeTextView(":hogehoge:test")
         textView.selectedRange = NSRange(location: 5, length: 0)
