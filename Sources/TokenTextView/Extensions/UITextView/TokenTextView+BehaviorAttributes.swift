@@ -69,10 +69,7 @@ extension TokenTextView {
 
     func updateTypingAttributesForegroundColor() {
         guard textStorage.length > 0 else {
-            var attributes = typingAttributes
-            attributes[.foregroundColor] = originalTypingForegroundColor ?? textColor ?? .label
-            attributes.removeValue(forKey: .markedTextOriginalForegroundColor)
-            typingAttributes = attributes
+            setTypingForegroundColor(originalTypingForegroundColor ?? textColor ?? .label)
             return
         }
         guard selectedRange.length == 0 else { return }
@@ -80,16 +77,25 @@ extension TokenTextView {
         let location = min(max(selectedRange.location, 0), textStorage.length)
         let candidateLocations = [location, location - 1].filter { $0 >= 0 && $0 < self.textStorage.length }
         let originalColor = candidateLocations.lazy.compactMap { location in
-            self.textStorage.attribute(
-                .markedTextOriginalForegroundColor,
-                at: location,
-                effectiveRange: nil
-            ) as? UIColor
+            self.originalForegroundColor(atUTF16Location: location)
         }.first
         guard let originalColor else { return }
 
+        setTypingForegroundColor(originalColor)
+    }
+
+    func originalForegroundColor(atUTF16Location location: Int) -> UIColor? {
+        guard location >= 0, location < textStorage.length else { return nil }
+        return textStorage.attribute(
+            .markedTextOriginalForegroundColor,
+            at: location,
+            effectiveRange: nil
+        ) as? UIColor
+    }
+
+    func setTypingForegroundColor(_ color: UIColor) {
         var attributes = typingAttributes
-        attributes[.foregroundColor] = originalColor
+        attributes[.foregroundColor] = color
         attributes.removeValue(forKey: .markedTextOriginalForegroundColor)
         typingAttributes = attributes
     }
