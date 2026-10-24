@@ -24,9 +24,10 @@ extension TokenTextView {
             textStorage.endEditing()
         }
         isReplacingMatches = false
+        let location = max(0, min(selection.location, textStorage.length))
         selectedRange = NSRange(
-            location: max(0, min(selection.location, textStorage.length)),
-            length: 0
+            location: location,
+            length: max(0, min(selection.length, textStorage.length - location))
         )
         notifyEditingStateChange()
     }
