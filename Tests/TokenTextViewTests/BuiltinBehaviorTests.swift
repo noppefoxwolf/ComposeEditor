@@ -437,6 +437,39 @@ struct BuiltinBehaviorTests {
         #expect(textView.typingAttributes[.foregroundColor] as? UIColor == originalColor)
     }
 
+    @Test(arguments: [false, true])
+    func repeatedMarkedInputPreservesCustomColor(atDocumentEnd: Bool) {
+        let textView = makeTextView("#NowPlaying")
+        let originalColor = UIColor.systemOrange
+        textView.textColor = originalColor
+        textView.tintColor = .systemBlue
+        textView.register(HashtagTokenBehavior())
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.addSubview(textView)
+        textView.selectedRange = NSRange(location: textView.textStorage.length, length: 0)
+        textView.handleTextViewDidChangeSelection(textView)
+        if !atDocumentEnd {
+            textView.selectedRange = NSRange(location: 1, length: "NowPlaying".utf16.count)
+        }
+
+        textView.setMarkedText(atDocumentEnd ? " nex" : "Now Play", selectedRange: NSRange(location: atDocumentEnd ? 4 : 8, length: 0))
+        textView.handleTextViewDidChange(textView)
+        textView.setMarkedText(atDocumentEnd ? " next" : "Now Playing", selectedRange: NSRange(location: atDocumentEnd ? 5 : 11, length: 0))
+        textView.handleTextViewDidChange(textView)
+        textView.unmarkText()
+        textView.handleTextViewDidChange(textView)
+        textView.handleTextViewDidChangeSelection(textView)
+
+        #expect(textView.text == (atDocumentEnd ? "#NowPlaying next" : "#Now Playing"))
+        let plainTextStart = atDocumentEnd ? "#NowPlaying".utf16.count : "#Now".utf16.count
+        for location in plainTextStart..<textView.textStorage.length {
+            #expect(textView.textStorage.attribute(.foregroundColor, at: location, effectiveRange: nil) as? UIColor == originalColor)
+            #expect(textView.textStorage.attribute(.markedTextOriginalForegroundColor, at: location, effectiveRange: nil) == nil)
+        }
+        #expect(textView.typingAttributes[.foregroundColor] as? UIColor == originalColor)
+        #expect(textView.typingAttributes[.markedTextOriginalForegroundColor] == nil)
+    }
+
     @Test func clearingHashtagResetsTypingForegroundColor() {
         let textView = makeTextView("")
         let originalColor = UIColor.systemOrange

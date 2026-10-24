@@ -104,15 +104,10 @@ open class TokenTextView: TextEditorTextView {
             && replacementText.last?.isWhitespace != true
         let appliedText = replacementNeedsTrailingSpace ? replacementText + " " : replacementText
 
-        let originalColor = textStorage.attribute(
-            .markedTextOriginalForegroundColor,
-            at: context.tokenRange.location,
-            effectiveRange: nil
-        ) as? UIColor ?? originalTypingForegroundColor ?? textColor ?? .label
+        let originalColor = originalForegroundColor(atUTF16Location: context.tokenRange.location)
+            ?? originalTypingForegroundColor ?? textColor ?? .label
         originalTypingForegroundColor = originalColor
-        var attributes = typingAttributes
-        attributes[.foregroundColor] = originalColor
-        typingAttributes = attributes
+        setTypingForegroundColor(originalColor)
 
         virtualKeyboard.replaceText(tokenRange, withText: appliedText)
 
@@ -155,14 +150,7 @@ open class TokenTextView: TextEditorTextView {
     public override func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
         let replacementRange = markedTextRange ?? selectedTextRange
         let location = replacementRange.map { offset(from: beginningOfDocument, to: $0.start) }
-        let originalColor = location.flatMap { location -> UIColor? in
-            guard location < textStorage.length else { return nil }
-            return textStorage.attribute(
-                .markedTextOriginalForegroundColor,
-                at: location,
-                effectiveRange: nil
-            ) as? UIColor
-        }
+        let originalColor = location.flatMap { originalForegroundColor(atUTF16Location: $0) }
 
         super.setMarkedText(markedText, selectedRange: selectedRange)
 
