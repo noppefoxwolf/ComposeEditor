@@ -390,6 +390,53 @@ struct BuiltinBehaviorTests {
         }
     }
 
+    @Test(arguments: [false, true])
+    func acceptingEnglishPredictionInsideHashtagDoesNotHighlightFollowingTyping(usesMarkedText: Bool) throws {
+        let textView = makeTextView("#NowPlaying")
+        let originalColor = UIColor.label
+        textView.textColor = originalColor
+        textView.tintColor = .systemBlue
+        textView.register(HashtagTokenBehavior())
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.addSubview(textView)
+        textView.selectedRange = NSRange(location: textView.textStorage.length, length: 0)
+        textView.handleTextViewDidChangeSelection(textView)
+        #expect(textView.textStorage.attribute(.foregroundColor, at: 1, effectiveRange: nil) as? UIColor == textView.tintColor)
+
+        // Exercise UITextInput replacement, rather than the editor's own token
+        // suggestions: the English prediction replaces the word after "#".
+        let replacementRange = NSRange(location: 1, length: "NowPlaying".utf16.count)
+        let start = try #require(textView.position(from: textView.beginningOfDocument, offset: replacementRange.location))
+        let end = try #require(textView.position(from: start, offset: replacementRange.length))
+        let range = try #require(textView.textRange(from: start, to: end))
+        #expect(textView.shouldChangeText(in: replacementRange, replacementText: "Now Playing"))
+        if usesMarkedText {
+            textView.selectedTextRange = range
+            textView.setMarkedText("Now Playing", selectedRange: NSRange(location: "Now Playing".utf16.count, length: 0))
+            textView.handleTextViewDidChange(textView)
+            textView.unmarkText()
+        } else {
+            textView.replace(range, withText: "Now Playing")
+        }
+        textView.handleTextViewDidChange(textView)
+        textView.handleTextViewDidChangeSelection(textView)
+
+        #expect(textView.text == "#Now Playing")
+        let insertionLocation = textView.textStorage.length
+        textView.selectedRange = NSRange(location: insertionLocation, length: 0)
+        #expect(textView.shouldChangeText(in: textView.selectedRange, replacementText: " next"))
+        textView.insertText(" next")
+        textView.handleTextViewDidChange(textView)
+        textView.handleTextViewDidChangeSelection(textView)
+
+        #expect(textView.text == "#Now Playing next")
+        #expect(textView.textStorage.attribute(.foregroundColor, at: 1, effectiveRange: nil) as? UIColor == textView.tintColor)
+        for location in 4..<textView.textStorage.length {
+            #expect(textView.textStorage.attribute(.foregroundColor, at: location, effectiveRange: nil) as? UIColor == originalColor)
+        }
+        #expect(textView.typingAttributes[.foregroundColor] as? UIColor == originalColor)
+    }
+
     @Test func clearingHashtagResetsTypingForegroundColor() {
         let textView = makeTextView("")
         let originalColor = UIColor.systemOrange

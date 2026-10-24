@@ -152,6 +152,32 @@ open class TokenTextView: TextEditorTextView {
         super.deleteBackward()
     }
 
+    public override func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
+        let replacementRange = markedTextRange ?? selectedTextRange
+        let location = replacementRange.map { offset(from: beginningOfDocument, to: $0.start) }
+        let originalColor = location.flatMap { location -> UIColor? in
+            guard location < textStorage.length else { return nil }
+            return textStorage.attribute(
+                .markedTextOriginalForegroundColor,
+                at: location,
+                effectiveRange: nil
+            ) as? UIColor
+        }
+
+        super.setMarkedText(markedText, selectedRange: selectedRange)
+
+        // UIKit can keep the token's foreground color while dropping custom
+        // attributes during prediction replacement. Preserve the restoration
+        // color so the normal commit scan can clear highlighting outside tokens.
+        if let originalColor, let markedTextRange {
+            let range = NSRange(
+                location: offset(from: beginningOfDocument, to: markedTextRange.start),
+                length: offset(from: markedTextRange.start, to: markedTextRange.end)
+            )
+            textStorage.addAttribute(.markedTextOriginalForegroundColor, value: originalColor, range: range)
+        }
+    }
+
     public override func cut(_ sender: Any?) {
         if let cutAction {
             cutAction(self)
