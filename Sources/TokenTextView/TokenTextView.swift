@@ -142,6 +142,14 @@ open class TokenTextView: TextEditorTextView {
             return
         }
 
+        let replacementEnd = NSMaxRange(replacementRange)
+        if appliedText.last?.isWhitespace != true,
+           selectedRange == NSRange(location: replacementEnd, length: 0),
+           replacementEnd < textStorage.length,
+           (textStorage.string as NSString).substring(with: NSRange(location: replacementEnd, length: 1)) == " " {
+            selectedRange = NSRange(location: replacementEnd + 1, length: 0)
+        }
+
         textStorage.removeAttribute(.markedTextOriginalForegroundColor, range: replacementRange)
         textStorage.addAttribute(.foregroundColor, value: originalColor, range: replacementRange)
         applyBehaviorAttributes(in: replacementRange)

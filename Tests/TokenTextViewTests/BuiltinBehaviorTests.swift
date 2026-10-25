@@ -251,6 +251,23 @@ struct BuiltinBehaviorTests {
         beforeExistingSpace.applySuggestion("#swift", for: spacedContext)
 
         #expect(beforeExistingSpace.text == "Use #swift ")
+        #expect(beforeExistingSpace.selectedRange == NSRange(location: beforeExistingSpace.text.utf16.count, length: 0))
+    }
+
+    @Test func applySuggestionInsideHashtagMovesCaretPastExistingSpace() {
+        let textView = makeTextView("#Nowplaying ")
+        textView.selectedRange = NSRange(location: "#Now".utf16.count, length: 0)
+        textView.register(HashtagTokenBehavior())
+
+        guard let context = textView.activeSuggestionContext else {
+            Issue.record("Expected an active hashtag suggestion context")
+            return
+        }
+
+        textView.applySuggestion("#Nowplaying", for: context)
+
+        #expect(textView.text == "#Nowplaying ")
+        #expect(textView.selectedRange == NSRange(location: textView.text.utf16.count, length: 0))
     }
 
     @Test func selectingHashtagSuggestionFromInsideTokenPreservesFollowingTypingColor() {
