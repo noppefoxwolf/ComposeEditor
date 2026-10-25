@@ -7,6 +7,57 @@ import UIKit
 @Suite
 @MainActor
 struct BuiltinBehaviorTests {
+    @Test(arguments: ["#Swift", "@alice", "https://example.com", ":star:", "😀 hello #日本語"], [false, true])
+    func virtualKeyboardSeparatesTrailingRegisteredTokensOnlyWithSmartInsert(_ insertedText: String, smartInsert: Bool) {
+        let textView = makeTextView("")
+        textView.register(HashtagTokenBehavior())
+        textView.register(MastodonMentionTokenBehavior())
+        textView.register(URLTokenBehavior())
+        textView.register(ShortcodeTokenBehavior(
+            maximumTokenLength: 100,
+            attachmentProvider: { _, _, _ in nil }
+        ))
+
+        textView.virtualKeyboard.insertText(insertedText, smartInsert: smartInsert)
+
+        let expectedText = insertedText + (smartInsert ? " " : "")
+        #expect(textView.plainText == expectedText)
+        #expect(textView.selectedRange.location == expectedText.utf16.count)
+    }
+
+    @Test(arguments: ["plain", "#Swift ", "#Swift\n", "#Swift!", "#Swift plain", ""])
+    func virtualKeyboardPreservesTextWithoutTrailingToken(_ insertedText: String) {
+        let textView = makeTextView("")
+        textView.register(HashtagTokenBehavior())
+
+        textView.virtualKeyboard.insertText(insertedText, smartInsert: true)
+
+        #expect(textView.plainText == insertedText)
+    }
+
+    @Test func virtualKeyboardOnlySeparatesRegisteredTokens() {
+        let textView = makeTextView("")
+        textView.virtualKeyboard.insertText("#Swift", smartInsert: true)
+        #expect(textView.plainText == "#Swift")
+
+        textView.register(HashtagTokenBehavior())
+        textView.virtualKeyboard.replaceText("#日本語", smartInsert: true)
+        #expect(textView.plainText == "#日本語 ")
+    }
+
+    @Test(arguments: ["word", " ", "\n", "!", "😀"], [false, true])
+    func virtualKeyboardRespectsTextFollowingReplacement(_ followingText: String, smartInsert: Bool) {
+        let textView = makeTextView("old" + followingText)
+        textView.register(HashtagTokenBehavior())
+        textView.selectedRange = NSRange(location: 0, length: 3)
+
+        textView.virtualKeyboard.insertText("#Swift", smartInsert: smartInsert)
+
+        let needsSpace = smartInsert && followingText.first?.isWhitespace != true
+        let expectedToken = needsSpace ? "#Swift " : "#Swift"
+        #expect(textView.plainText == expectedToken + followingText)
+    }
+
     private func makeTextView(_ text: String) -> TokenTextView {
         let textView = TokenTextView(frame: .zero, textContainer: nil)
         textView.text = text

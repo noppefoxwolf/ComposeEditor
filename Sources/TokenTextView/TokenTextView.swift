@@ -33,6 +33,30 @@ open class TokenTextView: TextEditorTextView {
         precondition(textLayoutManager != nil, "TokenTextView requires TextKit 2.")
     }
 
+    /// Separates an inserted trailing registered token from subsequent typing.
+    public override func textForInsertion(_ text: String, in insertionRange: UITextRange) -> String {
+        guard !text.isEmpty, text.last?.isWhitespace != true else { return text }
+        let range = NSRange(location: 0, length: text.utf16.count)
+        let matches = text.registeredMatches(in: range, behaviors: behaviors)
+        guard matches.last.map({ NSMaxRange($0.match.range) == range.length }) == true else {
+            return text
+        }
+        return textWithTrailingSpaceIfNeeded(
+            text,
+            replacingThrough: offset(from: beginningOfDocument, to: insertionRange.end)
+        )
+    }
+
+    private func textWithTrailingSpaceIfNeeded(_ text: String, replacingThrough endLocation: Int) -> String {
+        guard text.last?.isWhitespace != true else { return text }
+        let followingText = (textStorage.string as NSString).substring(from: endLocation)
+        if let followingCharacter = followingText.first,
+           !followingCharacter.isLetter && !followingCharacter.isNumber {
+            return text
+        }
+        return text + " "
+    }
+
     /// Registers or replaces a behavior with the same detector identifier.
     public func register(_ behavior: any TokenBehavior) {
         precondition(behavior.detector.maximumTokenLength > 0, "maximumTokenLength must be positive.")
@@ -97,12 +121,10 @@ open class TokenTextView: TextEditorTextView {
             return
         }
 
-        let replacementEndsAtDocumentEnd = NSMaxRange(context.tokenRange) == textStorage.length
-        let followingCharacter = context.text[tokenRange.upperBound...].first
-        let replacementPrecedesWord = followingCharacter.map { $0.isLetter || $0.isNumber } ?? false
-        let replacementNeedsTrailingSpace = (replacementEndsAtDocumentEnd || replacementPrecedesWord)
-            && replacementText.last?.isWhitespace != true
-        let appliedText = replacementNeedsTrailingSpace ? replacementText + " " : replacementText
+        let appliedText = textWithTrailingSpaceIfNeeded(
+            replacementText,
+            replacingThrough: NSMaxRange(context.tokenRange)
+        )
 
         let originalColor = originalForegroundColor(atUTF16Location: context.tokenRange.location)
             ?? originalTypingForegroundColor ?? textColor ?? .label

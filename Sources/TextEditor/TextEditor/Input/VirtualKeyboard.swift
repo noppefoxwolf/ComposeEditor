@@ -4,7 +4,7 @@ import UIKit
 
 @MainActor
 public final class VirtualKeyboard {
-    weak var textView: UITextView? = nil
+    weak var textView: TextEditorTextView? = nil
     let whiteSpace = " "
 
     public func insertText(_ text: String, smartInsert: Bool = false) {
@@ -12,6 +12,9 @@ public final class VirtualKeyboard {
               let range = textView.selectedTextRange,
               let replacement = approvedReplacement(text, in: range, smartInsert: smartInsert) else { return }
         textView.insertText(replacement)
+        if smartInsert && !replacement.isEmpty && !replacement.hasSuffix(whiteSpace) {
+            moveCaretPastExistingSpace()
+        }
     }
 
     public func appendText(_ text: String, smartInsert: Bool = false) {
@@ -49,12 +52,25 @@ public final class VirtualKeyboard {
         guard let textView,
               let replacement = approvedReplacement(text, in: textRange, smartInsert: smartInsert) else { return }
         textView.replace(textRange, withText: replacement)
+        if smartInsert && !replacement.isEmpty && !replacement.hasSuffix(whiteSpace) {
+            moveCaretPastExistingSpace()
+        }
+    }
+
+    private func moveCaretPastExistingSpace() {
+        guard let textView,
+              let selection = textView.selectedTextRange, selection.isEmpty,
+              let nextPosition = textView.position(from: selection.end, offset: 1),
+              let nextRange = textView.textRange(from: selection.end, to: nextPosition),
+              textView.text(in: nextRange) == whiteSpace else { return }
+        textView.selectedTextRange = textView.textRange(from: nextPosition, to: nextPosition)
     }
 
     private func approvedReplacement(_ text: String, in textRange: UITextRange, smartInsert: Bool) -> String? {
         guard let textView else { return nil }
         var replacement = text
         if smartInsert {
+            replacement = textView.textForInsertion(text, in: textRange)
             if !textView.hasLeftPadding(at: textRange.start) && !replacement.hasPrefix(whiteSpace) {
                 replacement.insert(contentsOf: whiteSpace, at: replacement.startIndex)
             }
